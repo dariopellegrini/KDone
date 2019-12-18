@@ -84,3 +84,7 @@ startKDone(
 ## Author
 
 Dario Pellegrini, pellegrini.dario.1303@gmail.com
+
+## License
+
+KDone is available under the MIT license. See the LICENSE file for more info.
