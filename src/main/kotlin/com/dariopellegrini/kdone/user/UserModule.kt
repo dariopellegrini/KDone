@@ -14,6 +14,8 @@ import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.dariopellegrini.kdone.user.model.KDoneUser
 import com.dariopellegrini.kdone.user.model.LoginInput
 import com.dariopellegrini.kdone.user.model.UserToken
+import com.dariopellegrini.kdone.user.social.apple.apple
+import com.dariopellegrini.kdone.user.social.facebook.facebook
 import com.premionocivelli.utils.HashUtils.sha512
 import io.ktor.application.call
 import io.ktor.auth.authenticate
@@ -85,6 +87,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     val uploader = configuration.uploader ?: throw ServerException(500, "Uploader not configured")
                     call.receiveMultipart().receive<T>(uploader) { map ->
                         val username = map["username"] ?: throw ServerException(400, "Missing username")
+                        map["password"] ?: throw ServerException(400, "Missing password")
                         val role = map["role"]
                         checkInput(username, role)
                     }
@@ -116,9 +119,10 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
                 if (repository.count(KDoneUser::username eq input.username) > 0) throw UsernameAlreadyExists()
 
-                input.password = sha512(input.password)
+                val password = input.password ?: throw ServerException(400, "Missing password")
+                input.password = sha512(password)
                 repository.insert(input)
-                call.respond(input.removePassword())
+                call.respond(input.secure())
             } catch (e: Exception) {
                 call.respondWithException(e)
             }
@@ -169,7 +173,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 }
 
                 if (users.isNotEmpty()) {
-                    call.respond(HttpStatusCode.OK, users.map { it.removePassword() })
+                    call.respond(HttpStatusCode.OK, users.map { it.secure() })
                 } else {
                     throw NotAuthorizedException()
                 }
@@ -189,7 +193,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
                 // Owner before everything
                 if (user._id.toString() == userAuth?.userId && configuration.authorization.checkOwner(read)) {
-                    call.respond(HttpStatusCode.OK, user.removePassword())
+                    call.respond(HttpStatusCode.OK, user.secure())
                 } else {
                     when {
                         // Role
@@ -205,7 +209,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                             if (!configuration.authorization.check(guest, read, user.role ?: registered.rawValue)) throw ForbiddenException()
                         }
                     }
-                    call.respond(HttpStatusCode.OK, user.removePassword())
+                    call.respond(HttpStatusCode.OK, user.secure())
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)
@@ -223,7 +227,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
                 // Owner before everything
                 if (user._id.toString() == userAuth?.userId && configuration.authorization.checkOwner(delete)) {
-                    call.respond(HttpStatusCode.OK, user.removePassword())
+                    call.respond(HttpStatusCode.OK, user.secure())
                 } else {
                     when {
                         // Role
@@ -316,13 +320,13 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                         checkInput(it["username"] as? String, it["role"] as? String)
                     }
                     repository.updateOneById(id.mongoId(), patch)
-                    call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).removePassword())
+                    call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).secure())
                 } else {
                     val patch = call.receiveMap<T>()
                     if (patch.containsKey("password")) throw ForbiddenException("Cannot change password")
                     checkInput(patch["username"] as? String, patch["role"] as? String)
                     repository.updateOneById(id.mongoId(), patch)
-                    call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).removePassword())
+                    call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).secure())
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)
@@ -341,7 +345,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             call.response.header(HttpHeaders.Authorization, token)
             tokenRepository.insert(UserToken(user._id, token, Date()))
 
-            call.respond(HttpStatusCode.OK, user.removePassword())
+            call.respond(HttpStatusCode.OK, user.secure())
         } catch (e: Exception) {
             call.respondWithException(e)
         }
@@ -353,7 +357,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 if (!configuration.authorization.checkOwner(read)) throw NotAuthorizedException()
                 call.checkToken(this@authenticate.database)
                 val user = repository.findById(call.userAuth.userId.mongoId())
-                call.respond(HttpStatusCode.OK, user.removePassword())
+                call.respond(HttpStatusCode.OK, user.secure())
             } catch (e: Exception) {
                 call.respondWithException(e)
             }
@@ -422,6 +426,16 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 call.respondWithException(e)
             }
         }
+    }
+
+    // Social
+
+    configuration.facebook?.let {
+        facebook(it.appId, it.appSecret, repository, tokenRepository, jwtConfig, configuration)
+    }
+
+    configuration.apple?.let {
+        apple(it.bundleId, repository, tokenRepository, jwtConfig, configuration)
     }
 }
 

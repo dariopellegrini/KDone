@@ -94,6 +94,9 @@ fun main() {
             }
 
             uploader = s3Uploader
+
+            facebook("appId", "appSecret")
+            apple("bundleId")
         }
     }
 }
@@ -113,7 +116,8 @@ data class Platform(val name: String,
                     val brand: String)
 
 data class User(override var username: String,
-                override var password: String,
+                override var password: String?,
+                override var facebookId: String?,
                 val name: String,
                 val surname: String,
                 val nickname: String,

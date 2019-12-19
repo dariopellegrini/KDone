@@ -1,5 +1,7 @@
 package com.dariopellegrini.kdone.extensions
 
+import com.auth0.jwt.exceptions.SignatureVerificationException
+import com.auth0.jwt.exceptions.TokenExpiredException
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.dariopellegrini.kdone.exceptions.*
@@ -98,6 +100,12 @@ suspend fun ApplicationCall.respondWithException(e: Exception) {
         is BadRequestException -> respond(
             HttpStatusCode(HttpStatusCode.BadRequest.value, e.localizedMessage),
             mapOf("error" to e.localizedMessage))
+        is TokenExpiredException -> respond(
+            HttpStatusCode(HttpStatusCode.Unauthorized.value, "Not authorized"),
+            mapOf("error" to e.localizedMessage))
+        is SignatureVerificationException -> respond(
+            HttpStatusCode(HttpStatusCode.Unauthorized.value, "Invalid signature"),
+            mapOf("error" to "Invalid signature"))
         else -> respond(
                 HttpStatusCode.InternalServerError,
                 mapOf("error" to e.localizedMessage, "type" to "Generic error", "exception" to e.toString()))

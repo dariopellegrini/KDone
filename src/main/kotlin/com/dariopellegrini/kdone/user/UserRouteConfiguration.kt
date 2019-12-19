@@ -6,6 +6,8 @@ import com.dariopellegrini.kdone.uploader.S3Uploader
 import com.dariopellegrini.kdone.uploader.Uploader
 import com.dariopellegrini.kdone.user.model.KDoneUser
 import com.dariopellegrini.kdone.user.model.LoginInput
+import com.dariopellegrini.kdone.user.social.apple.AppleConfiguration
+import com.dariopellegrini.kdone.user.social.facebook.FacebookConfiguration
 import com.mongodb.client.result.DeleteResult
 import org.litote.kmongo.Id
 
@@ -30,6 +32,9 @@ open class UserRouteConfiguration<T: KDoneUser> {
 
     var beforeDelete: (suspend (Headers, Id<T>) -> Unit)? = null
     var afterDelete: (suspend (Headers, DeleteResult) -> Unit)? = null
+
+    var facebook: FacebookConfiguration? = null
+    var apple: AppleConfiguration? = null
 
     fun authorizations(closure: UserAuthorization.() -> Unit) {
         authorization.closure()
@@ -91,5 +96,14 @@ open class UserRouteConfiguration<T: KDoneUser> {
 
     fun afterDelete(closure: suspend (Headers, DeleteResult) -> Unit) {
         afterDelete = closure
+    }
+
+    fun facebook(appId: String, appSecret: String) {
+        facebook =
+            FacebookConfiguration(appId, appSecret)
+    }
+
+    fun apple(bundleId: String) {
+        apple = AppleConfiguration(bundleId)
     }
 }

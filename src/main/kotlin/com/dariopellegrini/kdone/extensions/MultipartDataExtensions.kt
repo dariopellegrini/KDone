@@ -16,7 +16,7 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.jvmErasure
 
 suspend inline fun <reified T: Any>MultiPartData.receive(
-    uploader: Uploader,
+    uploader: Uploader?,
     beforeUpload: (Map<String, String>) -> Unit = {}): T {
     val primaryConstructor = T::class.primaryConstructor ?: throw ServerException(500, "No construsctor")
     val constructorParameters = primaryConstructor.parameters
@@ -76,27 +76,30 @@ suspend inline fun <reified T: Any>MultiPartData.receive(
         }
     }
 
-    beforeUpload(formParts)
+    if (uploader != null) {
+        beforeUpload(formParts)
 
-    val fileParts = parts.filterIsInstance<PartData.FileItem>().filter {
-        it.name != null
-    }.map {
-        it.name!!  to it
-    }.toMap()
+        val fileParts = parts.filterIsInstance<PartData.FileItem>().filter {
+            it.name != null
+        }.map {
+            it.name!!  to it
+        }.toMap()
 
-    val fileProperties = constructorParameters.filter { it.type.jvmErasure.isSubclassOf(ResourceFile::class) }
-    fileProperties.forEach { kParameter ->
-        if (!kParameter.type.isMarkedNullable && fileParts[kParameter.name] == null)
-            throw ServerException(400, "Missing ${kParameter.name} property")
+        val fileProperties = constructorParameters.filter { it.type.jvmErasure.isSubclassOf(ResourceFile::class) }
+        fileProperties.forEach { kParameter ->
+            if (!kParameter.type.isMarkedNullable && fileParts[kParameter.name] == null)
+                throw ServerException(400, "Missing ${kParameter.name} property")
 
-        fileParts[kParameter.name]?.let { partData ->
-            partData.getFile()?.let { file ->
-                val contentType = partData.contentType.contentTypeString
-                uploader.save(T::class.java.simpleName.toLowerCase(), file.name, file, contentType)?.let {
-                    constructorMap[kParameter] = ResourceFile(it, contentType)
+            fileParts[kParameter.name]?.let { partData ->
+                partData.getFile()?.let { file ->
+                    val contentType = partData.contentType.contentTypeString
+                    uploader.save(T::class.java.simpleName.toLowerCase(), file.name, file, contentType)?.let {
+                        constructorMap[kParameter] = ResourceFile(it, contentType)
+                    }
                 }
             }
         }
     }
+
     return primaryConstructor.callBy(constructorMap)
 }

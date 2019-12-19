@@ -53,6 +53,7 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMap(): Map<String, Any
 
 suspend inline fun <reified T: Any>ApplicationCall.receiveMultipartMap(
     uploader: Uploader,
+    addUnknown: List<String> = listOf(),
     beforeUpload: (Map<String, Any>) -> Unit = {}): Map<String, Any> {
 
     val parts = this@receiveMultipartMap.receiveMultipart().readAllParts()
@@ -80,15 +81,19 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMultipartMap(
     formParts.forEach { entry ->
         val key = entry.key
         val value = entry.value
-        val property = propertiesMap[key] ?: throw IOException("$key not found for class $kClass")
+        if (!addUnknown.contains(key)) {
+            val property = propertiesMap[key] ?: throw IOException("$key not found for class $kClass")
 
-        when {
-            entry.value is Map<*, *> -> {
-                val element = ObjectMapper().registerModule(KotlinModule()).readValue<T>(JSONObject((entry.value as Map<*, *>)).toString())
-                resultMap[key] = element
+            when {
+                entry.value is Map<*, *> -> {
+                    val element = ObjectMapper().registerModule(KotlinModule()).readValue<T>(JSONObject((entry.value as Map<*, *>)).toString())
+                    resultMap[key] = element
+                }
+                property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
+                else -> throw IOException("$key is not instance of ${property.returnType}")
             }
-            property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
-            else -> throw IOException("$key is not instance of ${property.returnType}")
+        } else {
+            resultMap[key] = value
         }
     }
 
