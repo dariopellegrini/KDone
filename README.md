@@ -45,6 +45,8 @@ startKDone(
         )
 
         userModule<User> {
+        
+            // Authorizations
             authorizations {
                 guest.can {
                     registered(create, read)
@@ -63,13 +65,16 @@ startKDone(
                 }
             }
 
+            // Uploader
             uploader = s3Uploader
             
+            // Social
             apple(Apple.bundleId)
             facebook(Facebook.appId, Facebook.appSecret)
         }
 
         module<Game>("games") {
+            // Authorizations
             authorizations {
                 guest()
                 registered(create, read)
@@ -77,7 +82,8 @@ startKDone(
                 "admin".can(create, read, update, delete)
                 "officer".can(read, update)
             }
-
+            
+            // Uploader
             uploader = s3Uploader
         }
     }
