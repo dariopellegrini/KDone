@@ -1,6 +1,10 @@
 package com.dariopellegrini.kdone
 
 import com.dariopellegrini.kdone.auth.*
+import com.dariopellegrini.kdone.configuration.Apple
+import com.dariopellegrini.kdone.configuration.Facebook
+import com.dariopellegrini.kdone.configuration.JWT
+import com.dariopellegrini.kdone.configuration.S3
 import com.dariopellegrini.kdone.model.DateModel
 import com.dariopellegrini.kdone.model.Identifiable
 import com.dariopellegrini.kdone.model.ResourceFile
@@ -16,16 +20,16 @@ fun main() {
     startKDone(
         port = System.getenv("PORT")?.toInt() ?: 23146,
         mongoURL = "mongodb://localhost:27017/games",
-        jwtConfig = JWTConfig("secret")) {
+        jwtConfig = JWTConfig(JWT.secret)) {
 
         val s3Uploader = S3Uploader(
-            baseFolder = "kdone",
-            baseURL = "https://image.provider.com",
-            bucketName = "kdonebucket",
-            accessKey = "ACCESSKEY",
-            secretKey = "SECRETKEY",
-            serviceEndpoint = "https://ams3.digitaloceanspaces.com",
-            signingRegion = "ams3"
+            baseFolder = S3.baseFolder,
+            baseURL = S3.baseURL,
+            bucketName = S3.bucketName,
+            accessKey = S3.accessKey,
+            secretKey = S3.secretKey,
+            serviceEndpoint = S3.serviceEndpoint,
+            signingRegion = S3.signingRegion
         )
 
         module<Game>("games") {
@@ -95,8 +99,8 @@ fun main() {
 
             uploader = s3Uploader
 
-            facebook("appId", "appSecret")
-            apple("bundleId")
+            facebook(Facebook.appId, Facebook.appSecret)
+            apple(Apple.bundleId)
         }
     }
 }
