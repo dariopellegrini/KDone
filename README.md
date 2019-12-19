@@ -64,6 +64,9 @@ startKDone(
             }
 
             uploader = s3Uploader
+            
+            apple(Apple.bundleId)
+            facebook(Facebook.appId, Facebook.appSecret)
         }
 
         module<Game>("games") {
