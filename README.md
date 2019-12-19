@@ -15,7 +15,7 @@ allprojects {
     }
 }
 ```
-Then add as dependency to your app/build.gradle
+Then add as dependency
 ``` groovy
 dependencies {
     ...
