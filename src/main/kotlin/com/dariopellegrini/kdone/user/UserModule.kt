@@ -6,6 +6,7 @@ import auth.userAuthOrNull
 import com.dariopellegrini.kdone.application.database
 import com.dariopellegrini.kdone.application.jwtConfiguration
 import com.dariopellegrini.kdone.auth.*
+import com.dariopellegrini.kdone.constants.queryParameter
 import com.dariopellegrini.kdone.constants.usersTokensCollection
 import com.dariopellegrini.kdone.exceptions.*
 import com.dariopellegrini.kdone.extensions.*
@@ -27,11 +28,11 @@ import io.ktor.request.receiveMultipart
 import io.ktor.response.header
 import io.ktor.response.respond
 import io.ktor.routing.*
+import io.ktor.util.toMap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import org.bson.conversions.Bson
-import org.litote.kmongo.eq
-import org.litote.kmongo.or
+import org.litote.kmongo.*
 import java.util.*
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.isSubclassOf
@@ -49,6 +50,10 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
     // users_token should be reserved
     val tokenRepository = MongoRepository(database, usersTokensCollection, UserToken::class.java)
+
+    T::class.java.geoIndexJson?.forEach {
+        repository.createIndex(it)
+    }
 
     authenticate("jwt", optional = true) {
         post("/users") {
@@ -133,6 +138,24 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 val userAuth = call.userAuthOrNull
                 if (userAuth != null) call.checkToken(this@authenticate.database)
 
+                // Filters
+                val queryMap = mutableMapOf<String, Any>()
+                call.request.queryParameters.toMap().filter { it.key != queryParameter }.map { it.key to it.value.first() }.map { pair ->
+                    when {
+                        pair.second.toIntOrNull() != null -> queryMap[pair.first] = pair.second.toInt()
+                        pair.second.toDoubleOrNull() != null -> queryMap[pair.first] = pair.second.toDouble()
+                        pair.second == "true" -> queryMap[pair.first] = true
+                        pair.second == "false" -> queryMap[pair.first] = false
+                        else -> queryMap[pair.first] = pair.second
+                    }
+                }
+                val mongoQuery = call.parameters[queryParameter]
+                val query = if (mongoQuery != null && queryMap.isNotEmpty()) {
+                    val first = queryMap.json.removeSuffix("}")
+                    val second = mongoQuery.removePrefix("{").removeSuffix("}")
+                    "$first, $second}"
+                } else mongoQuery ?: queryMap.json
+
                 val users = when {
                     userAuth?.role != null -> {
                         var bsonList: MutableList<Bson>? = null
@@ -144,7 +167,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                             if (bsonList == null) bsonList = mutableListOf()
                             bsonList!!.add(KDoneUser::role eq it)
                         }
-                        bsonList?.let { repository.findAll(or(it)) } ?: run { listOf<T>() }
+                        bsonList?.let { repository.findAll(and(or(it), query.bson)) } ?: run { listOf<T>() }
                     }
                     userAuth != null -> {
                         var bsonList: MutableList<Bson>? = null
@@ -156,7 +179,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                             if (bsonList == null) bsonList = mutableListOf()
                             bsonList!!.add(KDoneUser::role eq it)
                         }
-                        bsonList?.let { repository.findAll(or(it)) } ?: run { listOf<T>() }
+                        bsonList?.let { repository.findAll(and(or(it), query.bson)) } ?: run { listOf<T>() }
                     }
                     else -> {
                         var bsonList: MutableList<Bson>? = null
@@ -168,15 +191,11 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                             if (bsonList == null) bsonList = mutableListOf()
                             bsonList!!.add(KDoneUser::role eq it)
                         }
-                        bsonList?.let { repository.findAll(or(it)) } ?: run { listOf<T>() }
+                        bsonList?.let { repository.findAll(and(or(it), query.bson)) } ?: run { listOf<T>() }
                     }
                 }
 
-                if (users.isNotEmpty()) {
-                    call.respond(HttpStatusCode.OK, users.map { it.secure() })
-                } else {
-                    throw NotAuthorizedException()
-                }
+                call.respond(HttpStatusCode.OK, users.map { it.secure() })
             } catch (e: Exception) {
                 call.respondWithException(e)
             }
