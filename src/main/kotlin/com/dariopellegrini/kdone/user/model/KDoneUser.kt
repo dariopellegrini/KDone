@@ -11,8 +11,8 @@ abstract class KDoneUser {
     var role: String? = null
 
     open var facebookId: String? = null
-
     open var appleId: String? = null
+    open var googleId: String? = null
 }
 
 data class LoginInput(val username: String, val password: String)

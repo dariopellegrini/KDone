@@ -8,6 +8,7 @@ import com.dariopellegrini.kdone.user.model.KDoneUser
 import com.dariopellegrini.kdone.user.model.LoginInput
 import com.dariopellegrini.kdone.user.social.apple.AppleConfiguration
 import com.dariopellegrini.kdone.user.social.facebook.FacebookConfiguration
+import com.dariopellegrini.kdone.user.social.google.GoogleConfiguration
 import com.mongodb.client.result.DeleteResult
 import org.litote.kmongo.Id
 
@@ -35,6 +36,7 @@ open class UserRouteConfiguration<T: KDoneUser> {
 
     var facebook: FacebookConfiguration? = null
     var apple: AppleConfiguration? = null
+    var google: GoogleConfiguration? = null
 
     fun authorizations(closure: UserAuthorization.() -> Unit) {
         authorization.closure()
@@ -105,5 +107,9 @@ open class UserRouteConfiguration<T: KDoneUser> {
 
     fun apple(bundleId: String) {
         apple = AppleConfiguration(bundleId)
+    }
+
+    fun google(clientId: String, clientSecret: String, redirectURL: String) {
+        google = GoogleConfiguration(clientId, clientSecret, redirectURL)
     }
 }

@@ -17,6 +17,7 @@ import com.dariopellegrini.kdone.user.model.LoginInput
 import com.dariopellegrini.kdone.user.model.UserToken
 import com.dariopellegrini.kdone.user.social.apple.apple
 import com.dariopellegrini.kdone.user.social.facebook.facebook
+import com.dariopellegrini.kdone.user.social.google.google
 import com.dariopellegrini.kdone.utils.HashUtils.sha512
 import io.ktor.application.call
 import io.ktor.auth.authenticate
@@ -455,6 +456,10 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
     configuration.apple?.let {
         apple(it.bundleId, repository, tokenRepository, jwtConfig, configuration)
+    }
+
+    configuration.google?.let {
+        google(it.clientId, it.clientSecret, it.redirectURL, repository, tokenRepository, jwtConfig, configuration)
     }
 }
 
