@@ -1,6 +1,6 @@
 package com.dariopellegrini.kdone.extensions
 
-import com.premionocivelli.utils.guardLet
+import com.dariopellegrini.kdone.utils.guardLet
 import io.ktor.http.ContentType
 
 val ContentType?.contentTypeString: String

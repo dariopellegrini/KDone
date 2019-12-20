@@ -1,4 +1,4 @@
-package com.premionocivelli.utils
+package com.dariopellegrini.kdone.utils
 
 inline fun <T: Any> guardLet(vararg elements: T?, closure: () -> Nothing): List<T> {
     return if (elements.all { it != null }) {

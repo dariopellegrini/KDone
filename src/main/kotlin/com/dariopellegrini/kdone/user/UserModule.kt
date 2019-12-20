@@ -16,7 +16,7 @@ import com.dariopellegrini.kdone.user.model.LoginInput
 import com.dariopellegrini.kdone.user.model.UserToken
 import com.dariopellegrini.kdone.user.social.apple.apple
 import com.dariopellegrini.kdone.user.social.facebook.facebook
-import com.premionocivelli.utils.HashUtils.sha512
+import com.dariopellegrini.kdone.utils.HashUtils.sha512
 import io.ktor.application.call
 import io.ktor.auth.authenticate
 import io.ktor.http.HttpHeaders

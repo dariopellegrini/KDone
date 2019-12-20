@@ -1,4 +1,4 @@
-package com.premionocivelli.utils
+package com.dariopellegrini.kdone.utils
 
 import java.security.MessageDigest
 
