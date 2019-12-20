@@ -70,6 +70,7 @@ startKDone(
             
             // Social
             apple(Apple.bundleId)
+            google(Google.clientId, Google.clientSecret, Google.redirectURL)
             facebook(Facebook.appId, Facebook.appSecret)
         }
 
