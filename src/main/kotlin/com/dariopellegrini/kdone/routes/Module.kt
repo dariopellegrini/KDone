@@ -10,10 +10,7 @@ import com.dariopellegrini.kdone.auth.checkToken
 import com.dariopellegrini.kdone.constants.queryParameter
 import com.dariopellegrini.kdone.exceptions.ForbiddenException
 import com.dariopellegrini.kdone.exceptions.ServerException
-import com.dariopellegrini.kdone.extensions.receive
-import com.dariopellegrini.kdone.extensions.receiveMap
-import com.dariopellegrini.kdone.extensions.receiveMultipartMap
-import com.dariopellegrini.kdone.extensions.respondWithException
+import com.dariopellegrini.kdone.extensions.*
 import com.dariopellegrini.kdone.model.Identifiable
 import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.mongo.MongoRepository
@@ -43,6 +40,10 @@ inline fun <reified T : Any>Route.module(endpoint: String,
     val configuration = RouteConfiguration<T>()
     configuration.configure()
     val repository = MongoRepository(database, endpoint, T::class.java)
+
+    T::class.java.geoIndexJson?.forEach {
+        repository.createIndex(it)
+    }
 
     authenticate("jwt", optional = true) {
 

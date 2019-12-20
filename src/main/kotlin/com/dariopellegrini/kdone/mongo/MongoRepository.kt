@@ -2,6 +2,7 @@ package com.dariopellegrini.kdone.mongo
 
 import com.dariopellegrini.kdone.exceptions.NotFoundException
 import com.mongodb.client.MongoDatabase
+import com.mongodb.client.model.IndexModel
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
@@ -121,5 +122,9 @@ class MongoRepository<T>(private val database: MongoDatabase,
 
     suspend fun count(json: String): Long = withContext(Dispatchers.IO) {
         collection.countDocuments(json)
+    }
+
+    fun createIndex(index: String) {
+        collection.createIndex(index.bson)
     }
 }

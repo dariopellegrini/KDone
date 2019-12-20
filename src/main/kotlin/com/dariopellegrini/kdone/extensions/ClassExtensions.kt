@@ -1,22 +1,17 @@
-package com.s4win.vertirest.extensions
+package com.dariopellegrini.kdone.extensions
 
-import com.s4win.vertirest.date.DateModel
-import com.s4win.vertirest.models.GeoLocation
-import io.vertx.core.json.JsonObject
+import com.dariopellegrini.kdone.model.DateModel
+import com.dariopellegrini.kdone.model.GeoLocation
 
-val <T>Class<T>.geoIndexJson: JsonObject?
+val <T>Class<T>.geoIndexJson: List<String>?
     get() {
-        var jsonObject: JsonObject? = null
-        Class.forName(this.name).declaredFields.forEach { field ->
-            if (GeoLocation::class.java.isAssignableFrom(field.type)) {
-                if (jsonObject == null) {
-                    jsonObject = JsonObject()
-                }
-                jsonObject?.put(field.name, "2dsphere")
-
-            }
+        return Class.forName(this.name).declaredFields
+            .filter { GeoLocation::class.java.isAssignableFrom(it.type) }
+            .map { field ->
+            """
+                { ${field.name}:"2dsphere" }
+                """.trimIndent()
         }
-        return jsonObject
     }
 
 val <T>Class<T>.isDateModel: Boolean
