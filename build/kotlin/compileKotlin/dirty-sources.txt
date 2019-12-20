@@ -1,6 +1,0 @@
-/Users/dariopellegrini/Dropbox/Libraries/KDone/src/main/kotlin/com/dariopellegrini/kdone/utils/HashUtils.kt
-/Users/dariopellegrini/Dropbox/Libraries/KDone/src/main/kotlin/com/dariopellegrini/kdone/app.kt
-/Users/dariopellegrini/Dropbox/Libraries/KDone/src/main/kotlin/com/dariopellegrini/kdone/configuration/Configuration.kt
-/Users/dariopellegrini/Dropbox/Libraries/KDone/src/main/kotlin/com/dariopellegrini/kdone/extensions/ContentTypeExtensions.kt
-/Users/dariopellegrini/Dropbox/Libraries/KDone/src/main/kotlin/com/dariopellegrini/kdone/user/UserModule.kt
-/Users/dariopellegrini/Dropbox/Libraries/KDone/src/main/kotlin/com/dariopellegrini/kdone/utils/Utils.kt
