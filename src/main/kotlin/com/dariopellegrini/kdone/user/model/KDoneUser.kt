@@ -7,7 +7,7 @@ import org.litote.kmongo.newId
 abstract class KDoneUser {
     abstract var username: String
     abstract var password: String?
-    var _id: Id<KDoneUser> = newId()
+    val _id: Id<KDoneUser> = newId()
     var role: String? = null
 
     open var facebookId: String? = null
