@@ -58,7 +58,7 @@ startKDone(
     
 ```
 
-This configuration will open these endpoints:
+This configuration will open these endpoints for Game model:
 
 - POST http://localhost:23146/games performs creation of a new game
 - GET http://localhost:23146/games returns the list of all games
@@ -66,6 +66,8 @@ This configuration will open these endpoints:
 - PATCH http://localhost:23146/games/:id performs an update on the game with the specified id
 - DELETE http://localhost:23146/games/:id deletes the game with the specified id
 
+
+This configuration will then open these endpoints for User model:
 - POST http://localhost:23146/users/auth/login performs login for user using credentials specified in body, returning a JWT token
 - POST http://localhost:23146/users/auth/logout with token performs logout of the current user
 - POST http://localhost:23146/users performs a user signup
