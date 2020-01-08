@@ -57,7 +57,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
     }
 
     authenticate("jwt", optional = true) {
-        post("/users") {
+        post(endpoint) {
             try {
                 val userAuth = call.userAuthOrNull
 
@@ -134,7 +134,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             }
         }
 
-        get("users") {
+        get(endpoint) {
             try {
                 val userAuth = call.userAuthOrNull
                 if (userAuth != null) call.checkToken(this@authenticate.database)
@@ -202,7 +202,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             }
         }
 
-        get("users/{id}") {
+        get("$endpoint/{id}") {
             try {
                 val userAuth = call.userAuthOrNull
                 if (userAuth != null) call.checkToken(this@authenticate.database)
@@ -236,7 +236,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             }
         }
 
-        delete("users/{id}") {
+        delete("$endpoint/{id}") {
             try {
                 val userAuth = call.userAuthOrNull
                 if (userAuth != null) call.checkToken(this@authenticate.database)
@@ -293,7 +293,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             }
         }
 
-        patch("users/{id}") {
+        patch("$endpoint/{id}") {
             try {
                 val userAuth = call.userAuthOrNull
                 if (userAuth != null) call.checkToken(this@authenticate.database)
@@ -354,7 +354,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
         }
     }
 
-    post("login") {
+    post("$endpoint/auth/login") {
         try {
             val input = call.receive<LoginInput>()
             val user = repository.findOneOrNull(
@@ -372,7 +372,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
     }
 
     authenticate("jwt") {
-        get("users/me/profile") {
+        get("$endpoint/profile/me") {
             try {
                 if (!configuration.authorization.checkOwner(read)) throw NotAuthorizedException()
                 call.checkToken(this@authenticate.database)
@@ -383,7 +383,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             }
         }
 
-        delete("users/me/profile") {
+        delete("$endpoint/profile/me") {
             try {
                 if (!configuration.authorization.checkOwner(delete)) throw NotAuthorizedException()
                 call.checkToken(this@authenticate.database)
@@ -395,7 +395,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             }
         }
 
-        patch("users/me") {
+        patch("$endpoint/profile/me/") {
             try {
                 val userAuth = call.userAuth
 
@@ -430,7 +430,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             }
         }
 
-        post("logout") {
+        post("$endpoint/auth/logout") {
             try {
                 val userAuth = call.userAuth
                 val token = call.request.headers["Authorization"]?.removePrefix("Bearer ")
