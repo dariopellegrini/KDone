@@ -67,7 +67,7 @@ This configuration will open these endpoints for Game model:
 - DELETE http://localhost:23146/games/:id deletes the game with the specified id
 
 
-This configuration will then open these endpoints for User model:
+This configuration will also open these endpoints for User model:
 - POST http://localhost:23146/users/auth/login performs login for user using credentials specified in body, returning a JWT token
 - POST http://localhost:23146/users/auth/logout with token performs logout of the current user
 - POST http://localhost:23146/users performs a user signup
