@@ -58,7 +58,7 @@ startKDone(
     
 ```
 
-This configuration will open these endpoints on port 23146:
+This configuration will open these endpoints:
 
 - POST http://localhost:23146/games performs creation of a new game
 - GET http://localhost:23146/games returns the list of all games
