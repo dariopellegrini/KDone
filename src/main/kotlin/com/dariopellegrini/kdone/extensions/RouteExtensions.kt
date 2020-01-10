@@ -14,11 +14,14 @@ fun Route.localUploader(filesFolder: String): LocalUploader {
     val localUploader = LocalUploader(filesFolder)
 
     try {
-        get("${localUploader.filesFolder}/{folder}/{fileName}") {
+        get("${localUploader.filesFolder}/{firstFolder}/{secondFolder}/{thirdFolder}/{folder}/{fileName}") {
             try {
+                val firstFolder = call.parameters["firstFolder"] ?: throw BadRequestException("Missing firstFolder")
+                val secondFolder = call.parameters["secondFolder"] ?: throw BadRequestException("Missing secondFolder")
+                val thirdFolder = call.parameters["thirdFolder"] ?: throw BadRequestException("Missing thirdFolder")
                 val folder = call.parameters["folder"] ?: throw BadRequestException("Missing folder")
                 val fileName = call.parameters["fileName"] ?: throw BadRequestException("Missing file name")
-                val file = File("${localUploader.filesFolder}/$folder/$fileName")
+                val file = File("${localUploader.filesFolder}/$firstFolder/$secondFolder/$thirdFolder/$folder/$fileName")
                 if (file.exists()) {
                     call.respondFile(file)
                 } else {

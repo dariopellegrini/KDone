@@ -26,10 +26,14 @@ class LocalUploader(val filesFolder: String): Uploader {
             .shuffled()
             .joinToString("")
             .substring(0, 10)
-        val currentFolder = "$filesFolder/$folder"
-        val currentFolderFile = File("$filesFolder/$folder")
+        val firstFolder = randomString[0].toString().toLowerCase()
+        val secondFolder = randomString[1].toString().toLowerCase()
+        val thirdFolder = randomString[3].toString().toLowerCase()
+
+        val currentFolder = "$filesFolder/$firstFolder/$secondFolder/$thirdFolder/$folder"
+        val currentFolderFile = File(currentFolder)
         if (!currentFolderFile.exists()) {
-            currentFolderFile.mkdir()
+            currentFolderFile.mkdirs()
         }
         val fileName = "$currentFolder/${System.currentTimeMillis()}$randomString-$name"
         try {
