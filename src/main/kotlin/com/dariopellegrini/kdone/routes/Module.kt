@@ -8,6 +8,7 @@ import com.dariopellegrini.kdone.auth.AuthEnum
 import com.dariopellegrini.kdone.auth.checkPermission
 import com.dariopellegrini.kdone.auth.checkToken
 import com.dariopellegrini.kdone.constants.queryParameter
+import com.dariopellegrini.kdone.exceptions.BadRequestException
 import com.dariopellegrini.kdone.exceptions.ForbiddenException
 import com.dariopellegrini.kdone.exceptions.ServerException
 import com.dariopellegrini.kdone.extensions.*
@@ -74,14 +75,10 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     call.request.queryParameters.toMap().map { it.key to it.value.first() }.toMap())
                 }
 
-                println(query)
-
                 val elements = if (shouldCheckOwner) repository.findAll(and(
                     Identifiable::owner eq call.userAuth.userId.mongoId(),
                     KMongoUtil.toBson(query)))
                 else repository.findAll(query)
-
-                println(elements)
 
                 call.respond(HttpStatusCode.OK, elements)
 
@@ -89,6 +86,32 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     it(call.request.headers.toMap(),
                         call.request.queryParameters.toMap().map { it.key to it.value.first() }.toMap(),
                         elements)
+                }
+            } catch (e: Exception) {
+                call.respondWithException(e)
+            }
+        }
+
+        get("$endpoint/{id}") {
+            try {
+                call.checkToken(this@authenticate.database)
+                val shouldCheckOwner = checkPermission(call.userAuthOrNull, configuration.authorization, AuthEnum.READ)
+
+                val id = call.parameters["id"] ?: throw BadRequestException("Missing id")
+
+                val element = repository.findById(id.mongoId())
+                if (shouldCheckOwner) {
+                    (element as? Identifiable)?.let {
+                        if (it.owner.toString() != call.userAuth.userId) throw ForbiddenException()
+                    }
+                }
+
+                call.respond(HttpStatusCode.OK, element)
+
+                configuration.afterGet?.let {
+                    it(call.request.headers.toMap(),
+                        call.request.queryParameters.toMap().map { it.key to it.value.first() }.toMap(),
+                        listOf(element))
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)
