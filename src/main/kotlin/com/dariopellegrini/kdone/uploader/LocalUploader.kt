@@ -28,7 +28,7 @@ class LocalUploader(val filesFolder: String): Uploader {
             .substring(0, 10)
         val firstFolder = randomString[0].toString().toLowerCase()
         val secondFolder = randomString[1].toString().toLowerCase()
-        val thirdFolder = randomString[3].toString().toLowerCase()
+        val thirdFolder = randomString[2].toString().toLowerCase()
 
         val currentFolder = "$filesFolder/$firstFolder/$secondFolder/$thirdFolder/$folder"
         val currentFolderFile = File(currentFolder)
