@@ -17,8 +17,7 @@ open class S3Uploader(val baseFolder: String,
                  accessKey: String,
                  secretKey: String,
                  serviceEndpoint: String,
-                 signingRegion: String)
-    : Uploader {
+                 signingRegion: String): Uploader {
 
     private val doCred = AWSStaticCredentialsProvider(BasicAWSCredentials(accessKey, secretKey))
     private val s3Client = AmazonS3ClientBuilder.standard()
@@ -31,8 +30,8 @@ open class S3Uploader(val baseFolder: String,
         )
         .build()
 
-    override suspend fun save(folderName: String, fileName: String, file: File, contentType: String): String? {
-        return upload(folderName, fileName, file, contentType)
+    override suspend fun save(modelName: String, fileName: String, file: File, contentType: String): String? {
+        return upload(modelName, fileName, file, contentType)
     }
 
     private suspend fun upload(folder: String, name: String, file: File, contentType: String): String = withContext(Dispatchers.IO) {

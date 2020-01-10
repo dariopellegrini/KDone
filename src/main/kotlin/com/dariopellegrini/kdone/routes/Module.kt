@@ -15,6 +15,7 @@ import com.dariopellegrini.kdone.extensions.*
 import com.dariopellegrini.kdone.model.Identifiable
 import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.mongo.MongoRepository
+import com.dariopellegrini.kdone.uploader.LocalUploader
 import io.ktor.application.call
 import io.ktor.auth.authenticate
 import io.ktor.http.HttpStatusCode
@@ -22,14 +23,20 @@ import io.ktor.request.isMultipart
 import io.ktor.request.receive
 import io.ktor.request.receiveMultipart
 import io.ktor.response.respond
+import io.ktor.response.respondBytes
+import io.ktor.response.respondFile
 import io.ktor.routing.*
 import io.ktor.util.toMap
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withContext
 import org.litote.kmongo.and
 import org.litote.kmongo.eq
 import org.litote.kmongo.json
 import org.litote.kmongo.util.KMongoUtil
+import java.io.File
+import java.nio.file.Files
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.javaType
@@ -45,6 +52,20 @@ inline fun <reified T : Any>Route.module(endpoint: String,
     T::class.java.geoIndexJson?.forEach {
         repository.createIndex(it)
     }
+
+//    (configuration.uploader as? LocalUploader)?.let { localUploader ->
+//        get("${localUploader.filesFolder}/{folder}/{fileName}") {
+//            try {
+//                val folder = call.parameters["folder"] ?: throw BadRequestException("Missing folder")
+//                val fileName = call.parameters["fileName"] ?: throw BadRequestException("Missing folder")
+//                val file = File("${localUploader.filesFolder}/$folder/$fileName")
+////                val contentType = withContext(Dispatchers.IO) { Files.probeContentType(file.toPath()) }
+//                call.respondFile(file)
+//            } catch (e: Exception) {
+//                call.respondWithException(e)
+//            }
+//        }
+//    }
 
     authenticate("jwt", optional = true) {
 

@@ -10,6 +10,7 @@ import io.ktor.features.UnsupportedMediaTypeException
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 import kotlinx.io.errors.IOException
+import org.bson.json.JsonParseException
 import java.lang.IllegalArgumentException
 
 suspend fun ApplicationCall.respondWithException(e: Exception) {
@@ -106,6 +107,9 @@ suspend fun ApplicationCall.respondWithException(e: Exception) {
         is SignatureVerificationException -> respond(
             HttpStatusCode(HttpStatusCode.Unauthorized.value, "Invalid signature"),
             mapOf("error" to "Invalid signature"))
+        is JsonParseException -> respond(
+            HttpStatusCode(HttpStatusCode.BadRequest.value, "Bad request"),
+            mapOf("error" to e.localizedMessage))
         else -> respond(
                 HttpStatusCode.InternalServerError,
                 mapOf("error" to e.localizedMessage, "type" to "Generic error", "exception" to e.toString()))
