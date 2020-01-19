@@ -126,7 +126,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 if (repository.count(KDoneUser::username eq input.username) > 0) throw UsernameAlreadyExists()
 
                 val password = input.password ?: throw ServerException(400, "Missing password")
-                input.password = sha512(password)
+                input.password = if (configuration.hashStrategy != null) configuration.hashStrategy!!.invoke(password) else sha512(password)
                 repository.insert(input)
                 call.respond(input.secure())
             } catch (e: Exception) {
@@ -357,9 +357,12 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
     post("$endpoint/auth/login") {
         try {
             val input = call.receive<LoginInput>()
+            val password = if (configuration.hashStrategy != null)
+                configuration.hashStrategy!!.invoke(input.password)
+            else sha512(input.password)
             val user = repository.findOneOrNull(
                 KDoneUser::username eq input.username,
-                KDoneUser::password eq sha512(input.password)
+                KDoneUser::password eq password
             ) ?: throw NotAuthorizedException()
             val token = jwtConfig.makeToken(UserAuth(user._id.toString(), user.role))
             call.response.header(HttpHeaders.Authorization, token)

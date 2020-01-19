@@ -38,6 +38,8 @@ open class UserRouteConfiguration<T: KDoneUser> {
     var apple: AppleConfiguration? = null
     var google: GoogleConfiguration? = null
 
+    var hashStrategy: ((String) -> String)? = null
+
     fun authorizations(closure: UserAuthorization.() -> Unit) {
         authorization.closure()
     }
@@ -111,5 +113,9 @@ open class UserRouteConfiguration<T: KDoneUser> {
 
     fun google(clientId: String, clientSecret: String, redirectURL: String) {
         google = GoogleConfiguration(clientId, clientSecret, redirectURL)
+    }
+
+    fun hashStrategy(closure: (String) -> String) {
+        hashStrategy = closure
     }
 }
