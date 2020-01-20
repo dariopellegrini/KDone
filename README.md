@@ -1,6 +1,6 @@
 # KDone
 
-Ktor powered configurator for RESTful API with authentication.
+Ktor powered configurator for RESTful API, with authentication.
 
 KDone is an abstraction over Ktor that allows to configure and manage a RESTful backend with models, users, authorization and file upload. KDone makes a plenty use of Kotlin DSL and Ktor APIs, giving developers a declarative and fast way to write a Kotlin REST server from scratch.
 
