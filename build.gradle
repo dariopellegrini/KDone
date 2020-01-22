@@ -24,7 +24,6 @@ dependencies {
 
     api "io.ktor:ktor-server-netty:$ktor_version"
     api "io.ktor:ktor-auth-jwt:$ktor_version"
-    api "io.ktor:ktor-freemarker:$ktor_version"
     api "org.jetbrains.kotlin:kotlin-reflect"
 
     // Jackson
@@ -37,8 +36,7 @@ dependencies {
     api "org.litote.kmongo:kmongo-coroutine:$kmongo_version"
 
     // AWS SDK
-    api platform('com.amazonaws:aws-java-sdk-bom:1.11.228')
-    api 'com.amazonaws:aws-java-sdk-s3'
+    api 'com.amazonaws:aws-java-sdk-s3:1.11.711'
 
     api 'com.auth0:java-jwt:3.8.3'
     api 'com.auth0:jwks-rsa:0.9.0'
