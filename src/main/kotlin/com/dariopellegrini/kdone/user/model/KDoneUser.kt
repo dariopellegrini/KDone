@@ -8,7 +8,7 @@ abstract class KDoneUser {
     abstract var username: String
     abstract var password: String?
     val _id: Id<KDoneUser> = newId()
-    var role: String? = null
+    open var role: String? = null
 
     open var facebookId: String? = null
     open var appleId: String? = null
