@@ -348,6 +348,10 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     repository.updateOneById(id.mongoId(), patch)
                     call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).secure())
                 }
+
+                configuration.afterUpdate?.let {
+                    it(call.request.headers.toMap(), call.parameters.toMap(), user)
+                }
             } catch (e: Exception) {
                 call.respondWithException(e)
             }
