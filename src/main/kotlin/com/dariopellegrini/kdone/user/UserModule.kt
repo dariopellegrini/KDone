@@ -350,7 +350,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 }
 
                 configuration.afterUpdate?.let {
-                    it(call.request.headers.toMap(), call.parameters.toMap(), user)
+                    it(call, call.parameters.toMap(), user)
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)

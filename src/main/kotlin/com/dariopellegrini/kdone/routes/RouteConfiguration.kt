@@ -5,6 +5,8 @@ import com.dariopellegrini.kdone.interfaces.RouteActions
 import com.dariopellegrini.kdone.uploader.S3Uploader
 import com.dariopellegrini.kdone.uploader.Uploader
 import com.mongodb.client.result.DeleteResult
+import io.ktor.application.ApplicationCall
+import io.ktor.util.pipeline.PipelineContext
 import org.litote.kmongo.Id
 import java.io.File
 
@@ -13,17 +15,17 @@ class RouteConfiguration<T: Any> {
     var authorization: Authorization? = null
     var uploader: Uploader? = null
 
-    var beforeCreate: (suspend (Headers, T) -> Unit)? = null
-    var afterCreate: (suspend (Headers, T) -> Unit)? = null
+    var beforeCreate: (suspend (ApplicationCall, T) -> Unit)? = null
+    var afterCreate: (suspend (ApplicationCall, T) -> Unit)? = null
 
-    var beforeGet: (suspend (Headers, Map<String, Any>) -> Unit)? = null
-    var afterGet: (suspend (Headers, Map<String, Any>, List<T>) -> Unit)? = null
+    var beforeGet: (suspend (ApplicationCall, Map<String, Any>) -> Unit)? = null
+    var afterGet: (suspend (ApplicationCall, Map<String, Any>, List<T>) -> Unit)? = null
 
-    var beforeUpdate: (suspend (Headers, Id<T>, Map<String, Any>) -> Unit)? = null
-    var afterUpdate: (suspend (Headers, Map<String, Any>, T) -> Unit)? = null
+    var beforeUpdate: (suspend (ApplicationCall, Id<T>, Map<String, Any>) -> Unit)? = null
+    var afterUpdate: (suspend (ApplicationCall, Map<String, Any>, T) -> Unit)? = null
 
-    var beforeDelete: (suspend (Headers, Id<T>) -> Unit)? = null
-    var afterDelete: (suspend (Headers, DeleteResult) -> Unit)? = null
+    var beforeDelete: (suspend (ApplicationCall, Id<T>) -> Unit)? = null
+    var afterDelete: (suspend (ApplicationCall, DeleteResult) -> Unit)? = null
 
     fun authorizations(closure: Authorization.() -> Unit) {
         val authorization = Authorization()
@@ -41,35 +43,35 @@ class RouteConfiguration<T: Any> {
         uploader = S3Uploader(baseFolder, baseURL, bucketName, accessKey, secretKey, serviceEndpoint, signingRegion)
     }
 
-    fun beforeCreate(closure: suspend (Headers, T) -> Unit) {
+    fun beforeCreate(closure: suspend (ApplicationCall, T) -> Unit) {
         beforeCreate = closure
     }
 
-    fun afterCreate(closure: suspend (Headers, T) -> Unit) {
+    fun afterCreate(closure: suspend (ApplicationCall, T) -> Unit) {
         afterCreate = closure
     }
 
-    fun beforeGet(closure: suspend (Headers, Map<String, Any>) -> Unit) {
+    fun beforeGet(closure: suspend (ApplicationCall, Map<String, Any>) -> Unit) {
         beforeGet = closure
     }
 
-    fun afterGet(closure: suspend (Headers, Map<String, Any>, List<T>) -> Unit) {
+    fun afterGet(closure: suspend (ApplicationCall, Map<String, Any>, List<T>) -> Unit) {
         afterGet = closure
     }
 
-    fun beforeUpdate(closure: suspend (Headers, Id<T>, Map<String, Any>) -> Unit) {
+    fun beforeUpdate(closure: suspend (ApplicationCall, Id<T>, Map<String, Any>) -> Unit) {
         beforeUpdate = closure
     }
 
-    fun afterUpdate(closure: suspend (Headers, Map<String, Any>, T) -> Unit) {
+    fun afterUpdate(closure: suspend (ApplicationCall, Map<String, Any>, T) -> Unit) {
         afterUpdate = closure
     }
 
-    fun beforeDelete(closure: suspend (Headers, Id<T>) -> Unit) {
+    fun beforeDelete(closure: suspend (ApplicationCall, Id<T>) -> Unit) {
         beforeDelete = closure
     }
 
-    fun afterDelete(closure: suspend (Headers, DeleteResult) -> Unit) {
+    fun afterDelete(closure: suspend (ApplicationCall, DeleteResult) -> Unit) {
         afterDelete = closure
     }
 }

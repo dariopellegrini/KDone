@@ -92,7 +92,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     "$first, $second}"
                 } else mongoQuery ?: queryMap.json
 
-                configuration.beforeGet?.let { it(call.request.headers.toMap(),
+                configuration.beforeGet?.let { it(call,
                     call.request.queryParameters.toMap().map { it.key to it.value.first() }.toMap())
                 }
 
@@ -104,7 +104,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 call.respond(HttpStatusCode.OK, elements)
 
                 configuration.afterGet?.let {
-                    it(call.request.headers.toMap(),
+                    it(call,
                         call.request.queryParameters.toMap().map { it.key to it.value.first() }.toMap(),
                         elements)
                 }
@@ -130,7 +130,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 call.respond(HttpStatusCode.OK, element)
 
                 configuration.afterGet?.let {
-                    it(call.request.headers.toMap(),
+                    it(call,
                         call.request.queryParameters.toMap().map { it.key to it.value.first() }.toMap(),
                         listOf(element))
                 }
@@ -152,7 +152,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 }
 
                 configuration.beforeCreate?.let {
-                    it(call.request.headers.toMap(), element)
+                    it(call, element)
                 }
 
                 (element as? Identifiable)?.owner = call.userAuthOrNull?.userId?.mongoId()
@@ -161,7 +161,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
 
                 call.respond(HttpStatusCode.OK, element)
 
-                configuration.afterCreate?.let { it(call.request.headers.toMap(), element) }
+                configuration.afterCreate?.let { it(call, element) }
             } catch (e: Exception) {
                 call.respondWithException(e)
             }
@@ -188,7 +188,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 }
 
                 configuration.beforeUpdate?.let {
-                    it(call.request.headers.toMap(), id.mongoId(), patch)
+                    it(call, id.mongoId(), patch)
                 }
 
                 repository.updateOneById(id.mongoId(), patch)
@@ -198,7 +198,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 call.respond(HttpStatusCode.OK, updatedElement)
 
                 configuration.afterUpdate?.let {
-                    it(call.request.headers.toMap(), patch, updatedElement)
+                    it(call, patch, updatedElement)
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)
@@ -220,7 +220,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 }
 
                 configuration.beforeDelete?.let {
-                    it(call.request.headers.toMap(), id.mongoId())
+                    it(call, id.mongoId())
                 }
 
                 // Deleting files
@@ -246,7 +246,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 call.respond(HttpStatusCode.OK, deleteResult)
 
                 configuration.afterDelete?.let {
-                    it(call.request.headers.toMap(), deleteResult)
+                    it(call, deleteResult)
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)
