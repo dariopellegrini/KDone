@@ -103,6 +103,10 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     input
                 }
 
+                configuration.beforeCreate?.let {
+                    it(call, input)
+                }
+
                 if (userAuth?.role != null) {
                     if (input.role != null) {
                         if (!configuration.authorization.check(userAuth.role, create, input.role!!)) throw NotAuthorizedException()
@@ -129,6 +133,8 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 input.password = if (configuration.hashStrategy != null) configuration.hashStrategy!!.invoke(password) else sha512(password)
                 repository.insert(input)
                 call.respond(input.secure())
+
+                configuration.afterCreate?.let { it(call, input) }
             } catch (e: Exception) {
                 call.respondWithException(e)
             }
@@ -341,16 +347,18 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     }
                     repository.updateOneById(id.mongoId(), patch)
                     call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).secure())
+                    configuration.afterUpdate?.let {
+                        it(call, patch, user)
+                    }
                 } else {
                     val patch = call.receiveMap<T>()
                     if (patch.containsKey("password")) throw ForbiddenException("Cannot change password")
                     checkInput(patch["username"] as? String, patch["role"] as? String)
                     repository.updateOneById(id.mongoId(), patch)
                     call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).secure())
-                }
-
-                configuration.afterUpdate?.let {
-                    it(call, call.parameters.toMap(), user)
+                    configuration.afterUpdate?.let {
+                        it(call, patch, user)
+                    }
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)

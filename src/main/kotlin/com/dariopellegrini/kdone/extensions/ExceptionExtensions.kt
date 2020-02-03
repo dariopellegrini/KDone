@@ -9,7 +9,7 @@ import io.ktor.application.ApplicationCall
 import io.ktor.features.UnsupportedMediaTypeException
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
-import kotlinx.io.errors.IOException
+import io.ktor.utils.io.errors.IOException
 import org.bson.json.JsonParseException
 import java.lang.IllegalArgumentException
 
