@@ -8,12 +8,14 @@ import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.bson.Document
 import org.bson.conversions.Bson
 import org.litote.kmongo.*
 import kotlin.collections.toList
 
 class MongoRepository<T>(private val database: MongoDatabase,
-                         private val collectionName: String, classType: Class<T>) {
+                         private val collectionName: String,
+                         private val classType: Class<T>) {
     private val collection = database.getCollection(collectionName, classType)
 
     suspend fun insert(element: T) = withContext(Dispatchers.IO) {
@@ -119,6 +121,14 @@ class MongoRepository<T>(private val database: MongoDatabase,
 
     suspend fun updateMany(bson: Bson, update: Bson): UpdateResult = withContext(Dispatchers.IO) {
         collection.updateMany(bson, update)
+    }
+
+    suspend fun aggregate(json: List<String>): List<T> = withContext(Dispatchers.IO) {
+        collection.aggregate(json.map { Document.parse(it) }, classType).toList()
+    }
+
+    suspend fun aggregate(vararg bson: Bson): List<T> = withContext(Dispatchers.IO) {
+        collection.aggregate(bson.toList(), classType).toList()
     }
 
     suspend fun count(): Long = withContext(Dispatchers.IO) {
