@@ -24,16 +24,25 @@ class MongoRepository<T>(private val database: MongoDatabase,
         collection.find().toList()
     }
 
-    suspend fun findAll(bson: Bson): List<T> = withContext(Dispatchers.IO) {
-        collection.find(bson).toList()
+    suspend fun findAll(bson: Bson, limit: Int? = null, skip: Int? = null): List<T> = withContext(Dispatchers.IO) {
+        collection.find(bson).apply {
+            limit?.let { limit(it) }
+            skip?.let { skip(it) }
+        }.toList()
     }
 
-    suspend fun findAll(vararg bson: Bson): List<T> = withContext(Dispatchers.IO) {
-        collection.find(*bson).toList()
+    suspend fun findAll(vararg bson: Bson, limit: Int? = null, skip: Int? = null): List<T> = withContext(Dispatchers.IO) {
+        collection.find(*bson).apply {
+            limit?.let { limit(it) }
+            skip?.let { skip(it) }
+        }.toList()
     }
 
-    suspend fun findAll(json: String): List<T> = withContext(Dispatchers.IO) {
-        collection.find(json).toList()
+    suspend fun findAll(json: String, limit: Int? = null, skip: Int? = null): List<T> = withContext(Dispatchers.IO) {
+        collection.find(json).apply {
+            limit?.let { limit(it) }
+            skip?.let { skip(it) }
+        }.toList()
     }
 
     suspend fun findById(id: String): T = withContext(Dispatchers.IO) {

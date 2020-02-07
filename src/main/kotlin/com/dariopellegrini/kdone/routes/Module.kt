@@ -7,7 +7,9 @@ import com.dariopellegrini.kdone.application.database
 import com.dariopellegrini.kdone.auth.AuthEnum
 import com.dariopellegrini.kdone.auth.checkPermission
 import com.dariopellegrini.kdone.auth.checkToken
+import com.dariopellegrini.kdone.constants.limitParameter
 import com.dariopellegrini.kdone.constants.queryParameter
+import com.dariopellegrini.kdone.constants.skipParameter
 import com.dariopellegrini.kdone.exceptions.BadRequestException
 import com.dariopellegrini.kdone.exceptions.ForbiddenException
 import com.dariopellegrini.kdone.exceptions.ServerException
@@ -58,7 +60,6 @@ inline fun <reified T : Any>Route.module(endpoint: String,
 //            try {
 //                val folder = call.parameters["folder"] ?: throw BadRequestException("Missing folder")
 //                val fileName = call.parameters["fileName"] ?: throw BadRequestException("Missing folder")
-//                val file = File("${localUploader.filesFolder}/$folder/$fileName")
 ////                val contentType = withContext(Dispatchers.IO) { Files.probeContentType(file.toPath()) }
 //                call.respondFile(file)
 //            } catch (e: Exception) {
@@ -76,15 +77,17 @@ inline fun <reified T : Any>Route.module(endpoint: String,
 
                 // Filters
                 val queryMap = mutableMapOf<String, Any>()
-                call.request.queryParameters.toMap().filter { it.key != queryParameter }.map { it.key to it.value.first() }.map { pair ->
-                    when {
-                        pair.second.toIntOrNull() != null -> queryMap[pair.first] = pair.second.toInt()
-                        pair.second.toDoubleOrNull() != null -> queryMap[pair.first] = pair.second.toDouble()
-                        pair.second == "true" -> queryMap[pair.first] = true
-                        pair.second == "false" -> queryMap[pair.first] = false
-                        else -> queryMap[pair.first] = pair.second
+                call.request.queryParameters.toMap()
+                    .filter { it.key != queryParameter && it.key != limitParameter  && it.key != skipParameter }
+                    .map { it.key to it.value.first() }.map { pair ->
+                        when {
+                            pair.second.toIntOrNull() != null -> queryMap[pair.first] = pair.second.toInt()
+                            pair.second.toDoubleOrNull() != null -> queryMap[pair.first] = pair.second.toDouble()
+                            pair.second == "true" -> queryMap[pair.first] = true
+                            pair.second == "false" -> queryMap[pair.first] = false
+                            else -> queryMap[pair.first] = pair.second
+                        }
                     }
-                }
                 val mongoQuery = call.parameters[queryParameter]
                 val query = if (mongoQuery != null && queryMap.isNotEmpty()) {
                     val first = queryMap.json.removeSuffix("}")
@@ -96,10 +99,13 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     call.request.queryParameters.toMap().map { it.key to it.value.first() }.toMap())
                 }
 
+                val limit = call.parameters[limitParameter]?.toIntOrNull()
+                val skip = call.parameters[skipParameter]?.toIntOrNull()
+
                 val elements = if (shouldCheckOwner) repository.findAll(and(
                     Identifiable::owner eq call.userAuth.userId.mongoId(),
-                    KMongoUtil.toBson(query)))
-                else repository.findAll(query)
+                    KMongoUtil.toBson(query)), limit, skip)
+                else repository.findAll(query, limit = limit, skip = skip)
 
                 call.respond(HttpStatusCode.OK, elements)
 
