@@ -214,7 +214,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
         delete(("$endpoint/{id}")) {
             try {
                 call.checkToken(this@authenticate.database)
-                val shouldCheckOwner = checkPermission(call.userAuthOrNull, configuration.authorization, AuthEnum.UPDATE)
+                val shouldCheckOwner = checkPermission(call.userAuthOrNull, configuration.authorization, AuthEnum.DELETE)
 
                 val id = call.parameters["id"] ?: throw ServerException(400, "Missing id")
 

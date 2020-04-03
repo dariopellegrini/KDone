@@ -47,7 +47,6 @@ fun Application.installKDone(mongoDatabase: MongoDatabase,
         anyHost()
     }
     install(ContentNegotiation) {
-
         jackson {
             configureForKDone()
         }
