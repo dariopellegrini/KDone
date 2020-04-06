@@ -41,7 +41,7 @@ inline fun <reified I: Any, reified O: Any>I.remodelWith(closure: (KProperty1<I,
     }.associateWith {
         val property = propertiesByName[it.name] ?: return@associateWith null
         when (val value = closure(property, this)) {
-            is Unit -> property.get(this@mapUsing)
+            is Unit -> property.get(this@remodelWith)
             else -> value
         }
     })
