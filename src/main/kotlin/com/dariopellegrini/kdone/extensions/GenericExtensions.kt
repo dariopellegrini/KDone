@@ -6,9 +6,9 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 
 inline fun <reified I: Any, reified O: Any>I.map(): O {
-    val ctor = O::class.primaryConstructor ?: throw ConstructionException("Primary constructor for ${O::class} is missing")
+    val constructor = O::class.primaryConstructor ?: throw ConstructionException("Primary constructor for ${O::class} is missing")
     val propertiesByName = I::class.memberProperties.associateBy { it.name }
-    return ctor. callBy(ctor.parameters.filter {
+    return constructor. callBy(constructor.parameters.filter {
         propertiesByName.containsKey(it.name) // Probably default parameter
     }.associateWith {
         propertiesByName[it.name]?.get(this@map)
@@ -16,9 +16,9 @@ inline fun <reified I: Any, reified O: Any>I.map(): O {
 }
 
 inline fun <reified I: Any, reified O: Any>I.mapUsing(closure: (KParameter, I) -> Any): O {
-    val ctor = O::class.primaryConstructor ?: throw ConstructionException("Primary constructor for ${O::class} is missing")
+    val constructor = O::class.primaryConstructor ?: throw ConstructionException("Primary constructor for ${O::class} is missing")
     val propertiesByName = I::class.memberProperties.associateBy { it.name }
-    return ctor. callBy(ctor.parameters.filter {
+    return constructor.callBy(constructor.parameters.filter {
         propertiesByName.containsKey(it.name) // Probably default parameter
     }.associateWith {
         when (val value = closure(it, this)) {
