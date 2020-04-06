@@ -130,7 +130,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 if (repository.count(KDoneUser::username eq input.username) > 0) throw UsernameAlreadyExists()
 
                 val password = input.password ?: throw ServerException(400, "Missing password")
-                input.password = if (configuration.hashStrategy != null) configuration.hashStrategy!!.invoke(password) else sha512(password)
+                input.password = if (configuration.hashStrategy != null) configuration.hashStrategy!!.hash(password) else sha512(password)
                 repository.insert(input)
                 call.respond(input.secure())
 
@@ -369,13 +369,20 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
     post("$endpoint/auth/login") {
         try {
             val input = call.receive<LoginInput>()
-            val password = if (configuration.hashStrategy != null)
-                configuration.hashStrategy!!.invoke(input.password)
-            else sha512(input.password)
-            val user = repository.findOneOrNull(
-                KDoneUser::username eq input.username,
-                KDoneUser::password eq password
-            ) ?: throw NotAuthorizedException()
+
+            val user = if (configuration.hashStrategy != null) {
+                val user = repository.findOneOrNull(
+                    KDoneUser::username eq input.username) ?: throw NotAuthorizedException()
+                val password = user.password ?: throw NotAuthorizedException()
+                if (!configuration.hashStrategy!!.verify(input.password, password)) throw NotAuthorizedException()
+                user
+            } else {
+                val password = sha512(input.password)
+                repository.findOneOrNull(
+                    KDoneUser::username eq input.username,
+                    KDoneUser::password eq password
+                ) ?: throw NotAuthorizedException()
+            }
             val token = jwtConfig.makeToken(UserAuth(user._id.toString(), user.role))
             call.response.header(HttpHeaders.Authorization, token)
             tokenRepository.insert(UserToken(user._id, token, Date()))

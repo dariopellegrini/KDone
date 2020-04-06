@@ -54,20 +54,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
     T::class.java.geoIndexJson?.forEach {
         repository.createIndex(it)
     }
-
-//    (configuration.uploader as? LocalUploader)?.let { localUploader ->
-//        get("${localUploader.filesFolder}/{folder}/{fileName}") {
-//            try {
-//                val folder = call.parameters["folder"] ?: throw BadRequestException("Missing folder")
-//                val fileName = call.parameters["fileName"] ?: throw BadRequestException("Missing folder")
-////                val contentType = withContext(Dispatchers.IO) { Files.probeContentType(file.toPath()) }
-//                call.respondFile(file)
-//            } catch (e: Exception) {
-//                call.respondWithException(e)
-//            }
-//        }
-//    }
-
+    
     authenticate("jwt", optional = true) {
 
         get(endpoint) {

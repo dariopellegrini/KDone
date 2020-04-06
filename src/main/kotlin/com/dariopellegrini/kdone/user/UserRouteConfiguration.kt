@@ -4,6 +4,7 @@ import com.dariopellegrini.kdone.auth.UserAuthorization
 import com.dariopellegrini.kdone.routes.Headers
 import com.dariopellegrini.kdone.uploader.S3Uploader
 import com.dariopellegrini.kdone.uploader.Uploader
+import com.dariopellegrini.kdone.user.hash.HashStrategy
 import com.dariopellegrini.kdone.user.model.KDoneUser
 import com.dariopellegrini.kdone.user.model.LoginInput
 import com.dariopellegrini.kdone.user.social.apple.AppleConfiguration
@@ -39,7 +40,7 @@ open class UserRouteConfiguration<T: KDoneUser> {
     var apple: AppleConfiguration? = null
     var google: GoogleConfiguration? = null
 
-    var hashStrategy: ((String) -> String)? = null
+    var hashStrategy: HashStrategy? = null
 
     fun authorizations(closure: UserAuthorization.() -> Unit) {
         authorization.closure()
@@ -116,7 +117,7 @@ open class UserRouteConfiguration<T: KDoneUser> {
         google = GoogleConfiguration(clientId, clientSecret, redirectURL)
     }
 
-    fun hashStrategy(closure: (String) -> String) {
-        hashStrategy = closure
+    fun hashStrategy(hash: (String) -> String, verify: (String, String) -> Boolean) {
+        hashStrategy = HashStrategy(hash, verify)
     }
 }
