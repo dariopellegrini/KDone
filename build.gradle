@@ -43,7 +43,8 @@ dependencies {
 
     api 'com.google.api-client:google-api-client:1.30.5'
 
-    compile group: 'at.favre.lib', name: 'bcrypt', version: '0.7.0'
+    api 'org.slf4j:slf4j-api:1.7.25'
+    api 'org.slf4j:slf4j-simple:1.6.1'
 }
 
 compileKotlin {

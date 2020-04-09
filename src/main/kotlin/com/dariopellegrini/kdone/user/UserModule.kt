@@ -137,6 +137,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 configuration.afterCreate?.let { it(call, input) }
             } catch (e: Exception) {
                 call.respondWithException(e)
+                configuration.exceptionHandler?.invoke(call, e)
             }
         }
 
@@ -205,6 +206,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 call.respond(HttpStatusCode.OK, users.map { it.secure() })
             } catch (e: Exception) {
                 call.respondWithException(e)
+                configuration.exceptionHandler?.invoke(call, e)
             }
         }
 
@@ -239,6 +241,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)
+                configuration.exceptionHandler?.invoke(call, e)
             }
         }
 
@@ -296,6 +299,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)
+                configuration.exceptionHandler?.invoke(call, e)
             }
         }
 
@@ -362,6 +366,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)
+                configuration.exceptionHandler?.invoke(call, e)
             }
         }
     }
@@ -390,6 +395,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             call.respond(HttpStatusCode.OK, user.secure())
         } catch (e: Exception) {
             call.respondWithException(e)
+            configuration.exceptionHandler?.invoke(call, e)
         }
     }
 
@@ -402,6 +408,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 call.respond(HttpStatusCode.OK, user.secure())
             } catch (e: Exception) {
                 call.respondWithException(e)
+                configuration.exceptionHandler?.invoke(call, e)
             }
         }
 
@@ -414,6 +421,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 call.respond(HttpStatusCode.OK, result)
             } catch (e: Exception) {
                 call.respondWithException(e)
+                configuration.exceptionHandler?.invoke(call, e)
             }
         }
 
@@ -449,6 +457,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 call.respond(HttpStatusCode.OK, repository.updateOneById(call.userAuth.userId.mongoId(), patch))
             } catch (e: Exception) {
                 call.respondWithException(e)
+                configuration.exceptionHandler?.invoke(call, e)
             }
         }
 
@@ -466,6 +475,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 call.respond(HttpStatusCode.OK, result)
             } catch (e: Exception) {
                 call.respondWithException(e)
+                configuration.exceptionHandler?.invoke(call, e)
             }
         }
     }

@@ -42,6 +42,8 @@ open class UserRouteConfiguration<T: KDoneUser> {
 
     var hashStrategy: HashStrategy? = null
 
+    var exceptionHandler: ((ApplicationCall, Exception) -> Unit)? = null
+
     fun authorizations(closure: UserAuthorization.() -> Unit) {
         authorization.closure()
     }
@@ -119,5 +121,9 @@ open class UserRouteConfiguration<T: KDoneUser> {
 
     fun hashStrategy(hash: (String) -> String, verify: (String, String) -> Boolean) {
         hashStrategy = HashStrategy(hash, verify)
+    }
+
+    fun exceptionHandler(closure: (ApplicationCall, Exception) -> Unit) {
+        exceptionHandler = closure
     }
 }

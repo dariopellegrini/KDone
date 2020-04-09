@@ -2,6 +2,8 @@ package com.dariopellegrini.kdone.extensions
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 fun Any.secure(): Map<String, Any> {
 
@@ -16,3 +18,5 @@ fun Any.secure(): Map<String, Any> {
         remove("googleId")
     }
 }
+
+val Any.logger: Logger get() = LoggerFactory.getLogger(this::class.java)

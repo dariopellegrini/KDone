@@ -1,6 +1,7 @@
 package com.dariopellegrini.kdone.routes
 
 import com.dariopellegrini.kdone.auth.Authorization
+import com.dariopellegrini.kdone.dto.DTOConfiguration
 import com.dariopellegrini.kdone.interfaces.RouteActions
 import com.dariopellegrini.kdone.uploader.S3Uploader
 import com.dariopellegrini.kdone.uploader.Uploader
@@ -26,6 +27,10 @@ class RouteConfiguration<T: Any> {
 
     var beforeDelete: (suspend (ApplicationCall, Id<T>) -> Unit)? = null
     var afterDelete: (suspend (ApplicationCall, DeleteResult) -> Unit)? = null
+
+    var dtoConfiguration: DTOConfiguration<T>? = null
+
+    var exceptionHandler: ((ApplicationCall, Exception) -> Unit)? = null
 
     fun authorizations(closure: Authorization.() -> Unit) {
         val authorization = Authorization()
@@ -73,5 +78,14 @@ class RouteConfiguration<T: Any> {
 
     fun afterDelete(closure: suspend (ApplicationCall, DeleteResult) -> Unit) {
         afterDelete = closure
+    }
+
+    fun dto(closure: DTOConfiguration<T>.() -> Any) {
+        dtoConfiguration = DTOConfiguration()
+        dtoConfiguration?.closure()
+    }
+
+    fun exceptionHandler(closure: (ApplicationCall, Exception) -> Unit) {
+        exceptionHandler = closure
     }
 }

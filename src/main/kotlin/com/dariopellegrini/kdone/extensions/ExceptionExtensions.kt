@@ -14,59 +14,57 @@ import org.bson.json.JsonParseException
 import java.lang.IllegalArgumentException
 
 suspend fun ApplicationCall.respondWithException(e: Exception) {
-    println("$e\n${e.localizedMessage}")
+
+    logger.logger.warn("$e: ${e.localizedMessage}")
     when (e) {
         is UserIdNotVerifiedForDocument -> respond(
-                HttpStatusCode.Unauthorized,
-                mapOf("error" to e.localizedMessage, "type" to "Authorization error"))
+            HttpStatusCode.Unauthorized,
+            mapOf("error" to e.localizedMessage, "type" to "Authorization error"))
         is NotAuthorizedException -> respond(
-                HttpStatusCode.Unauthorized,
-                mapOf("error" to e.localizedMessage, "type" to "Authorization error"))
+            HttpStatusCode.Unauthorized,
+            mapOf("error" to e.localizedMessage, "type" to "Authorization error"))
         is SignUpErrorException -> respond(
-                HttpStatusCode.BadRequest,
-                mapOf("error" to e.localizedMessage, "type" to "Authorization error"))
+            HttpStatusCode.BadRequest,
+            mapOf("error" to e.localizedMessage, "type" to "Authorization error"))
         is MissingDocumentId -> respond(
-                HttpStatusCode.Unauthorized,
-                mapOf("error" to e.localizedMessage, "type" to "Request error"))
+            HttpStatusCode.Unauthorized,
+            mapOf("error" to e.localizedMessage, "type" to "Request error"))
         is MismatchedInputException -> respond(
             HttpStatusCode.BadRequest,
             mapOf("error" to e.localizedMessage, "type" to "Input error"))
         is JsonMappingException -> respond(
             HttpStatusCode.BadRequest,
             mapOf("error" to e.localizedMessage, "type" to "Input error"))
-//        is JsonSyntaxException -> respond(
-//                HttpStatusCode.BadRequest,
-//                mapOf("error" to e.localizedMessage, "type" to "Request error"))
         is MissingAccessToken -> respond(
-                HttpStatusCode.BadRequest,
-                mapOf("error" to e.localizedMessage, "type" to "Request error"))
+            HttpStatusCode.BadRequest,
+            mapOf("error" to e.localizedMessage, "type" to "Request error"))
         is MissingRefreshToken -> respond(
-                HttpStatusCode.BadRequest,
-                mapOf("error" to e.localizedMessage, "type" to "Request error"))
+            HttpStatusCode.BadRequest,
+            mapOf("error" to e.localizedMessage, "type" to "Request error"))
         is MissingUsername -> respond(
-                HttpStatusCode.BadRequest,
-                mapOf("error" to e.localizedMessage, "type" to "Request error"))
+            HttpStatusCode.BadRequest,
+            mapOf("error" to e.localizedMessage, "type" to "Request error"))
         is MissingPassword -> respond(
-                HttpStatusCode.BadRequest,
-                mapOf("error" to e.localizedMessage, "type" to "Request error"))
+            HttpStatusCode.BadRequest,
+            mapOf("error" to e.localizedMessage, "type" to "Request error"))
         is MissingMotherInfoId -> respond(
-                HttpStatusCode.BadRequest,
-                mapOf("error" to e.localizedMessage, "type" to "Request error"))
+            HttpStatusCode.BadRequest,
+            mapOf("error" to e.localizedMessage, "type" to "Request error"))
         is MissingSonInfoId -> respond(
-                HttpStatusCode.BadRequest,
-                mapOf("error" to e.localizedMessage, "type" to "Request error"))
+            HttpStatusCode.BadRequest,
+            mapOf("error" to e.localizedMessage, "type" to "Request error"))
         is DocumentNotFound -> respond(
-                HttpStatusCode.NotFound,
-                mapOf("error" to e.localizedMessage, "type" to "Resource not found"))
+            HttpStatusCode.NotFound,
+            mapOf("error" to e.localizedMessage, "type" to "Resource not found"))
         is MotherInfoIdNotFound -> respond(
-                HttpStatusCode.NotFound,
-                mapOf("error" to e.localizedMessage, "type" to "Resource not found"))
+            HttpStatusCode.NotFound,
+            mapOf("error" to e.localizedMessage, "type" to "Resource not found"))
         is SonInfoIdNotFound -> respond(
-                HttpStatusCode.NotFound,
-                mapOf("error" to e.localizedMessage, "type" to "Resource not found"))
+            HttpStatusCode.NotFound,
+            mapOf("error" to e.localizedMessage, "type" to "Resource not found"))
         is AuthNotValidException -> respond(
-                HttpStatusCode.Unauthorized,
-                mapOf("error" to e.localizedMessage, "type" to "Signup error"))
+            HttpStatusCode.Unauthorized,
+            mapOf("error" to e.localizedMessage, "type" to "Signup error"))
         is ServerException -> respond(
             HttpStatusCode(e.statusCode, e.localizedMessage),
             mapOf("error" to e.localizedMessage))
@@ -111,7 +109,7 @@ suspend fun ApplicationCall.respondWithException(e: Exception) {
             HttpStatusCode(HttpStatusCode.BadRequest.value, "Bad request"),
             mapOf("error" to e.localizedMessage))
         else -> respond(
-                HttpStatusCode.InternalServerError,
-                mapOf("error" to e.localizedMessage, "type" to "Generic error", "exception" to e.toString()))
+            HttpStatusCode.InternalServerError,
+            mapOf("error" to e.localizedMessage, "type" to "Generic error", "exception" to e.toString()))
     }
 }

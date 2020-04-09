@@ -17,7 +17,6 @@ import com.dariopellegrini.kdone.extensions.*
 import com.dariopellegrini.kdone.model.Identifiable
 import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.mongo.MongoRepository
-import com.dariopellegrini.kdone.uploader.LocalUploader
 import io.ktor.application.call
 import io.ktor.auth.authenticate
 import io.ktor.http.HttpStatusCode
@@ -25,23 +24,16 @@ import io.ktor.request.isMultipart
 import io.ktor.request.receive
 import io.ktor.request.receiveMultipart
 import io.ktor.response.respond
-import io.ktor.response.respondBytes
-import io.ktor.response.respondFile
 import io.ktor.routing.*
 import io.ktor.util.toMap
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.withContext
 import org.litote.kmongo.and
 import org.litote.kmongo.eq
 import org.litote.kmongo.json
 import org.litote.kmongo.util.KMongoUtil
-import java.io.File
-import java.nio.file.Files
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.jvm.javaType
 import kotlin.reflect.jvm.jvmErasure
 
 inline fun <reified T : Any>Route.module(endpoint: String,
@@ -60,7 +52,8 @@ inline fun <reified T : Any>Route.module(endpoint: String,
         get(endpoint) {
             try {
                 call.checkToken(this@authenticate.database)
-                val shouldCheckOwner = checkPermission(call.userAuthOrNull, configuration.authorization, AuthEnum.READ)
+                val userAuth = call.userAuthOrNull
+                val shouldCheckOwner = checkPermission(userAuth, configuration.authorization, AuthEnum.READ)
 
                 // Filters
                 val queryMap = mutableMapOf<String, Any>()
@@ -94,7 +87,19 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     KMongoUtil.toBson(query)), limit, skip)
                 else repository.findAll(query, limit = limit, skip = skip)
 
-                call.respond(HttpStatusCode.OK, elements)
+                if (configuration.dtoConfiguration != null) {
+                    val dtoElements = elements.map {
+                        val dtoRead = configuration.dtoConfiguration?.readDTO(userAuth, it) ?: return@map it
+                        when {
+                            dtoRead.init != null -> dtoRead.init.invoke(it)
+                            dtoRead.closure != null -> it.transfer(T::class, dtoRead.kClass, dtoRead.closure)
+                            else -> it.transfer(T::class, dtoRead.kClass)
+                        }
+                    }
+                    call.respond(HttpStatusCode.OK, dtoElements)
+                } else {
+                    call.respond(HttpStatusCode.OK, elements)
+                }
 
                 configuration.afterGet?.let {
                     it(call,
@@ -120,7 +125,17 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     }
                 }
 
-                call.respond(HttpStatusCode.OK, element)
+                val dtoRead = configuration.dtoConfiguration?.readDTO(call.userAuthOrNull, element)
+                if (dtoRead != null) {
+                    val dtoElement = when {
+                        dtoRead.init != null -> dtoRead.init.invoke(element)
+                        dtoRead.closure != null -> element.transfer(T::class, dtoRead.kClass, dtoRead.closure)
+                        else -> element.transfer(T::class, dtoRead.kClass)
+                    }
+                    call.respond(HttpStatusCode.OK, dtoElement)
+                } else {
+                    call.respond(HttpStatusCode.OK, element)
+                }
 
                 configuration.afterGet?.let {
                     it(call,
@@ -129,6 +144,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)
+                configuration.exceptionHandler?.invoke(call, e)
             }
         }
 
@@ -157,6 +173,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 configuration.afterCreate?.let { it(call, element) }
             } catch (e: Exception) {
                 call.respondWithException(e)
+                configuration.exceptionHandler?.invoke(call, e)
             }
         }
 
@@ -195,6 +212,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)
+                configuration.exceptionHandler?.invoke(call, e)
             }
         }
 
@@ -243,6 +261,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)
+                configuration.exceptionHandler?.invoke(call, e)
             }
         }
     }

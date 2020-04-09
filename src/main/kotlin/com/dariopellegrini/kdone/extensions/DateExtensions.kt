@@ -11,3 +11,13 @@ val Date.ISOUTC: String
         df.timeZone = tz
         return df.format(this)
     }
+
+fun Date.yearsFromNow(): Double {
+    val milliseconds = this.time
+    val currentMilliseconds = Date().time
+    val difference = currentMilliseconds - milliseconds
+
+    val years = (difference.toDouble() / 1000 / 60 / 60 / 24 / 365.25)
+
+    return years
+}
