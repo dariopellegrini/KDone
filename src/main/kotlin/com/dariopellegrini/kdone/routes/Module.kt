@@ -10,6 +10,7 @@ import com.dariopellegrini.kdone.auth.checkToken
 import com.dariopellegrini.kdone.constants.limitParameter
 import com.dariopellegrini.kdone.constants.queryParameter
 import com.dariopellegrini.kdone.constants.skipParameter
+import com.dariopellegrini.kdone.dto.transferAny
 import com.dariopellegrini.kdone.exceptions.BadRequestException
 import com.dariopellegrini.kdone.exceptions.ForbiddenException
 import com.dariopellegrini.kdone.exceptions.ServerException
@@ -32,6 +33,7 @@ import org.litote.kmongo.and
 import org.litote.kmongo.eq
 import org.litote.kmongo.json
 import org.litote.kmongo.util.KMongoUtil
+import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.jvmErasure
@@ -155,9 +157,29 @@ inline fun <reified T : Any>Route.module(endpoint: String,
 
                 val element = if (call.request.isMultipart()) {
                     val uploader = configuration.uploader ?: throw ServerException(500, "Uploader not configured")
-                    call.receiveMultipart().receive(uploader)
+                    val dtoCreate = configuration.dtoConfiguration?.createDTO(userAuth = call.userAuthOrNull)
+                    if (dtoCreate != null) {
+                        val klass = dtoCreate.kClass
+                        val element = call.receiveMultipart().receive(klass, uploader)
+                        when {
+                            dtoCreate.init != null -> dtoCreate.init.invoke(element)
+                            else -> element.transferAny(klass as KClass<*>, T::class)
+                        }
+                    } else {
+                        call.receiveMultipart().receive(uploader)
+                    }
                 } else {
-                    call.receive<T>()
+                    val dtoCreate = configuration.dtoConfiguration?.createDTO(userAuth = call.userAuthOrNull)
+                    if (dtoCreate != null) {
+                        val klass = dtoCreate.kClass
+                        val element = call.receive(klass)
+                        when {
+                            dtoCreate.init != null -> dtoCreate.init.invoke(element)
+                            else -> element.transferAny(klass as KClass<*>, T::class)
+                        }
+                    } else {
+                        call.receive<T>()
+                    }
                 }
 
                 configuration.beforeCreate?.let {
@@ -183,15 +205,30 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 val shouldCheckOwner = checkPermission(call.userAuthOrNull, configuration.authorization, AuthEnum.UPDATE)
 
                 val id = call.parameters["id"] ?: throw ServerException(400, "Missing id")
+                val element = repository.findById(id.mongoId())
+
                 val patch = if (call.request.isMultipart()) {
                     val uploader = configuration.uploader ?: throw ServerException(500, "Uploader not configured")
-                    call.receiveMultipartMap<T>(uploader)
+                    val dtoUpdate = configuration.dtoConfiguration?.updateDTO(call.userAuthOrNull, element)
+                    if (dtoUpdate != null) {
+                        call.receiveMultipartMap(dtoUpdate.kClass, uploader).apply {
+                            checkWithType<T>()
+                        }
+                    } else {
+                        call.receiveMultipartMap<T>(uploader)
+                    }
                 } else {
-                    call.receiveMap<T>()
+                    val dtoUpdate = configuration.dtoConfiguration?.updateDTO(call.userAuthOrNull, element)
+                    if (dtoUpdate != null) {
+                        call.receiveMap(dtoUpdate.kClass).apply {
+                            checkWithType<T>()
+                        }
+                    } else {
+                        call.receiveMap<T>()
+                    }
                 }
 
                 if (shouldCheckOwner) {
-                    val element = repository.findById(id.mongoId())
                     (element as? Identifiable)?.owner?.let {
                         if (it.toString() != call.userAuth.userId) throw ForbiddenException()
                     } ?: run { throw ForbiddenException("No owner found") }

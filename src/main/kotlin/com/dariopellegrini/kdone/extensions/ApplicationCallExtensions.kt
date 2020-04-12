@@ -15,6 +15,7 @@ import kotlinx.coroutines.*
 import org.json.simple.JSONObject
 import java.io.IOException
 import java.util.*
+import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.jvmErasure
@@ -117,6 +118,112 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMultipartMap(
             value.getFile()?.let { file ->
                 val contentType = value.contentType.contentTypeString
                 uploader.save(T::class.java.simpleName.toLowerCase(), file.name, file, contentType)?.let {
+                    resultMap[property.name] = ResourceFile(it, contentType)
+                }
+            }
+        }
+    }
+
+//    jobs.awaitAll()
+
+    return resultMap
+}
+
+suspend fun <T: Any>ApplicationCall.receiveMap(kClass: KClass<T>): Map<String, Any> {
+    val inputMap = this.receive<Map<String, Any>>()
+    val propertiesMap = kClass.declaredMemberProperties.map {
+        it.name to it
+    }.toMap()
+
+    val resultMap = mutableMapOf<String, Any>()
+
+    inputMap.forEach { entry ->
+        val key = entry.key
+        val value = entry.value
+        val property = propertiesMap[key] ?: throw IOException("$key not found for class $kClass")
+
+        when {
+            entry.value is Map<*, *> -> {
+                val element = ObjectMapper().registerModule(KotlinModule()).readValue(JSONObject((entry.value as Map<*, *>)).toString(), kClass.java)
+                resultMap[key] = element
+            }
+            property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
+            else -> throw IOException("$key is not instance of ${property.returnType}")
+        }
+    }
+
+    if (DateModel::class.java.isAssignableFrom(kClass.java)) {
+        resultMap.remove("dateCreated")
+        resultMap.put("dateUpdated", Date())
+    }
+
+    return resultMap
+}
+
+suspend fun <T: Any>ApplicationCall.receiveMultipartMap(
+    kClass: KClass<T>,
+    uploader: Uploader,
+    addUnknown: List<String> = listOf(),
+    beforeUpload: (Map<String, Any>) -> Unit = {}): Map<String, Any> {
+    val parts = this@receiveMultipartMap.receiveMultipart().readAllParts()
+    val propertiesMap = kClass.declaredMemberProperties.map {
+        it.name to it
+    }.toMap()
+
+    val formParts = parts.filterIsInstance<PartData.FormItem>().filter {
+        it.name != null
+    }.map {
+        it.name!!  to when {
+            it.value.toIntOrNull() != null -> it.value.toInt()
+            it.value.toDoubleOrNull() != null -> it.value.toDouble()
+            it.value == "true" -> true
+            it.value == "false" -> false
+            it.value.dateOrNull != null -> it.value.date
+            else -> it.value
+        }
+    }.toMap().toMutableMap()
+
+    val resultMap = mutableMapOf<String, Any>()
+
+    formParts.forEach { entry ->
+        val key = entry.key
+        val value = entry.value
+        if (!addUnknown.contains(key)) {
+            val property = propertiesMap[key] ?: throw IOException("$key not found for class $kClass")
+
+            when {
+                entry.value is Map<*, *> -> {
+                    val element = ObjectMapper().registerModule(KotlinModule()).readValue(JSONObject((entry.value as Map<*, *>)).toString(), kClass.java)
+                    resultMap[key] = element
+                }
+                property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
+                else -> throw IOException("$key is not instance of ${property.returnType}")
+            }
+        } else {
+            resultMap[key] = value
+        }
+    }
+
+    if (DateModel::class.java.isAssignableFrom(kClass.java)) {
+        resultMap.remove("dateCreated")
+        resultMap["dateUpdated"] = Date()
+    }
+
+    beforeUpload(resultMap)
+
+    parts.filterIsInstance<PartData.FileItem>().filter {
+        it.name != null
+    }.map {
+        it.name!!  to it
+    }.toMap().map { entry ->
+        val key = entry.key
+        val value = entry.value
+        val property = propertiesMap[key] ?: throw IOException("$key not found for class $kClass")
+
+        if (property.returnType.jvmErasure.isSubclassOf(ResourceFile::class)) {
+            value.getFile()?.let { file ->
+                val contentType = value.contentType.contentTypeString
+                uploader.save(kClass.java.simpleName.toLowerCase(), file.name, file, contentType)?.let {
                     resultMap[property.name] = ResourceFile(it, contentType)
                 }
             }
