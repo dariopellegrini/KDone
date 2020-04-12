@@ -190,7 +190,17 @@ inline fun <reified T : Any>Route.module(endpoint: String,
 
                 repository.insert(element)
 
-                call.respond(HttpStatusCode.OK, element)
+                val dtoRead = configuration.dtoConfiguration?.readDTO(call.userAuthOrNull, element)
+                if (dtoRead != null) {
+                    val dtoElement = when {
+                        dtoRead.init != null -> dtoRead.init.invoke(element)
+                        dtoRead.closure != null -> element.transfer(T::class, dtoRead.kClass, dtoRead.closure)
+                        else -> element.transfer(T::class, dtoRead.kClass)
+                    }
+                    call.respond(HttpStatusCode.Created, dtoElement)
+                } else {
+                    call.respond(HttpStatusCode.Created, element)
+                }
 
                 configuration.afterCreate?.let { it(call, element) }
             } catch (e: Exception) {
@@ -242,7 +252,17 @@ inline fun <reified T : Any>Route.module(endpoint: String,
 
                 val updatedElement = repository.findById(id.mongoId())
 
-                call.respond(HttpStatusCode.OK, updatedElement)
+                val dtoRead = configuration.dtoConfiguration?.readDTO(call.userAuthOrNull, updatedElement)
+                if (dtoRead != null) {
+                    val dtoElement = when {
+                        dtoRead.init != null -> dtoRead.init.invoke(updatedElement)
+                        dtoRead.closure != null -> updatedElement.transfer(T::class, dtoRead.kClass, dtoRead.closure)
+                        else -> updatedElement.transfer(T::class, dtoRead.kClass)
+                    }
+                    call.respond(HttpStatusCode.OK, dtoElement)
+                } else {
+                    call.respond(HttpStatusCode.OK, updatedElement)
+                }
 
                 configuration.afterUpdate?.let {
                     it(call, patch, updatedElement)
