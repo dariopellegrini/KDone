@@ -17,7 +17,7 @@ Then add as Kdone dependency
 ``` groovy
 dependencies {
     ...
-    implementation 'com.github.dariopellegrini:KDone:v0.1'
+    implementation 'com.github.dariopellegrini:KDone:v0.5.1'
 }
 ```
 
