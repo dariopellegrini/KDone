@@ -38,7 +38,6 @@ data class Game(
 Second create a user model
 ```kotlin
 data class User(override var username: String,
-                override var password: String?,
                 val nickname: String) : KDoneUser()
 ```
 
