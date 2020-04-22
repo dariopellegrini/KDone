@@ -13,3 +13,10 @@ inline fun <T: Any> ifLet(vararg elements: T?, closure: (List<T>) -> Unit) {
         closure(elements.filterNotNull())
     }
 }
+ fun randomString(length: Int): String {
+     val charPool : List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+     return (1..length)
+         .map { i -> kotlin.random.Random.nextInt(0, charPool.size) }
+         .map(charPool::get)
+         .joinToString("");
+ }

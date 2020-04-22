@@ -1,7 +1,9 @@
 package com.dariopellegrini.kdone.user
 
 import com.dariopellegrini.kdone.auth.UserAuthorization
-import com.dariopellegrini.kdone.routes.Headers
+import com.dariopellegrini.kdone.email.EmailConfirmationConfiguration
+import com.dariopellegrini.kdone.email.EmailSender
+import com.dariopellegrini.kdone.email.model.EmailMessage
 import com.dariopellegrini.kdone.uploader.S3Uploader
 import com.dariopellegrini.kdone.uploader.Uploader
 import com.dariopellegrini.kdone.user.hash.HashStrategy
@@ -13,6 +15,7 @@ import com.dariopellegrini.kdone.user.social.google.GoogleConfiguration
 import com.mongodb.client.result.DeleteResult
 import io.ktor.application.ApplicationCall
 import org.litote.kmongo.Id
+import org.simplejavamail.mailer.internal.MailerRegularBuilderImpl
 
 open class UserRouteConfiguration<T: KDoneUser> {
     var authorization: UserAuthorization = UserAuthorization()
@@ -43,6 +46,11 @@ open class UserRouteConfiguration<T: KDoneUser> {
     var hashStrategy: HashStrategy? = null
 
     var exceptionHandler: ((ApplicationCall, Exception) -> Unit)? = null
+
+    var loggedInAfterSignUp: Boolean? = null
+
+    var needsEmailConfirmation: Boolean? = null
+    var emailConfirmationConfiguration: EmailConfirmationConfiguration? = null
 
     fun authorizations(closure: UserAuthorization.() -> Unit) {
         authorization.closure()
@@ -125,5 +133,12 @@ open class UserRouteConfiguration<T: KDoneUser> {
 
     fun exceptionHandler(closure: (ApplicationCall, Exception) -> Unit) {
         exceptionHandler = closure
+    }
+
+    fun emailConfirmation(emailSender: EmailSender,
+                          baseURL: String,
+                          redirectURL: String,
+                          emailSenderClosure: (String) -> EmailMessage) {
+        emailConfirmationConfiguration = EmailConfirmationConfiguration(emailSender, baseURL, redirectURL, emailSenderClosure)
     }
 }

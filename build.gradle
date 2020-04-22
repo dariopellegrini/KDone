@@ -22,13 +22,17 @@ repositories {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
+    // Ktor
     api "io.ktor:ktor-server-netty:$ktor_version"
     api "io.ktor:ktor-auth-jwt:$ktor_version"
+
+    // Kotlin reflection
     api "org.jetbrains.kotlin:kotlin-reflect"
 
     // Jackson
     api "io.ktor:ktor-jackson:$ktor_version"
 
+    // KotlinX Coroutines
     api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2'
 
     // MongoDB
@@ -38,13 +42,19 @@ dependencies {
     // AWS SDK
     api 'com.amazonaws:aws-java-sdk-s3:1.11.711'
 
+    // JWT and RSA
     api 'com.auth0:java-jwt:3.8.3'
     api 'com.auth0:jwks-rsa:0.9.0'
 
+    // Google SDK
     api 'com.google.api-client:google-api-client:1.30.5'
 
+    // Logs
     api 'org.slf4j:slf4j-api:1.7.25'
     api 'org.slf4j:slf4j-simple:1.6.1'
+
+    // Client E-mail
+    implementation "org.simplejavamail:simple-java-mail:6.0.0-rc2"
 }
 
 compileKotlin {

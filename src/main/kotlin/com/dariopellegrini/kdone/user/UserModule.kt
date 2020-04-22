@@ -7,7 +7,10 @@ import com.dariopellegrini.kdone.application.database
 import com.dariopellegrini.kdone.application.jwtConfiguration
 import com.dariopellegrini.kdone.auth.*
 import com.dariopellegrini.kdone.constants.queryParameter
+import com.dariopellegrini.kdone.constants.usersConfirmationsCollection
 import com.dariopellegrini.kdone.constants.usersTokensCollection
+import com.dariopellegrini.kdone.email.EmailConfirmationConfiguration
+import com.dariopellegrini.kdone.email.model.UserConfirmation
 import com.dariopellegrini.kdone.exceptions.*
 import com.dariopellegrini.kdone.extensions.*
 import com.dariopellegrini.kdone.model.ResourceFile
@@ -15,10 +18,12 @@ import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.dariopellegrini.kdone.user.model.KDoneUser
 import com.dariopellegrini.kdone.user.model.LoginInput
 import com.dariopellegrini.kdone.user.model.UserToken
+import com.dariopellegrini.kdone.user.model.ownerForbiddenAttributes
 import com.dariopellegrini.kdone.user.social.apple.apple
 import com.dariopellegrini.kdone.user.social.facebook.facebook
 import com.dariopellegrini.kdone.user.social.google.google
 import com.dariopellegrini.kdone.utils.HashUtils.sha512
+import com.dariopellegrini.kdone.utils.randomString
 import io.ktor.application.call
 import io.ktor.auth.authenticate
 import io.ktor.http.HttpHeaders
@@ -28,7 +33,9 @@ import io.ktor.request.receive
 import io.ktor.request.receiveMultipart
 import io.ktor.response.header
 import io.ktor.response.respond
+import io.ktor.response.respondRedirect
 import io.ktor.routing.*
+import io.ktor.util.error
 import io.ktor.util.toMap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -51,9 +58,16 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
     // users_token should be reserved
     val tokenRepository = MongoRepository(database, usersTokensCollection, UserToken::class.java)
+    val emailConfirmationRepository = MongoRepository(database, usersConfirmationsCollection, UserConfirmation::class.java)
 
     T::class.java.geoIndexJson?.forEach {
         repository.createIndex(it)
+    }
+
+    val emailConfirmationConfiguration: EmailConfirmationConfiguration? = configuration.emailConfirmationConfiguration
+
+    if (configuration.needsEmailConfirmation == true && configuration.emailConfirmationConfiguration == null) {
+        throw ServerException(500, "E-mail confirmation not configured")
     }
 
     authenticate("jwt", optional = true) {
@@ -131,10 +145,34 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
                 val password = input.password ?: throw ServerException(400, "Missing password")
                 input.password = if (configuration.hashStrategy != null) configuration.hashStrategy!!.hash(password) else sha512(password)
+
+                if (configuration.loggedInAfterSignUp == true && configuration.needsEmailConfirmation != true) {
+                    val token = jwtConfig.makeToken(UserAuth(input._id.toString(), input.role))
+                    call.response.header(HttpHeaders.Authorization, token)
+                    tokenRepository.insert(UserToken(input._id, token, Date()))
+                }
+
                 repository.insert(input)
                 call.respond(input.secure())
 
                 configuration.afterCreate?.let { it(call, input) }
+
+                if (emailConfirmationConfiguration != null) {
+                    val code = randomString(32)
+                    val userConfirmation = UserConfirmation(input._id, input.username, code, false)
+                    emailConfirmationRepository.insert(userConfirmation)
+                    val link = "${emailConfirmationConfiguration.baseURL}/$endpoint/auth/verify/$code".normalizeURL
+                    val message = emailConfirmationConfiguration.emailSenderClosure(link)
+                    try {
+                        emailConfirmationConfiguration.emailSender.send(
+                            message.sender.name to message.sender.address,
+                            input.username to input.username,
+                            message.subject, message.message)
+                        logger.info("E-mail sent")
+                    } catch (e: Exception) {
+                        logger.error(e)
+                    }
+                }
             } catch (e: Exception) {
                 call.respondWithException(e)
                 configuration.exceptionHandler?.invoke(call, e)
@@ -388,6 +426,11 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     KDoneUser::password eq password
                 ) ?: throw NotAuthorizedException()
             }
+
+            if (configuration.needsEmailConfirmation == true && user.confirmed != true) {
+                throw ForbiddenException("This account has not been confirmed")
+            }
+
             val token = jwtConfig.makeToken(UserAuth(user._id.toString(), user.role))
             call.response.header(HttpHeaders.Authorization, token)
             tokenRepository.insert(UserToken(user._id, token, Date()))
@@ -434,9 +477,17 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
                 val patch: Map<String, Any> = if (call.request.isMultipart()) {
                     val uploader = configuration.uploader ?: throw ServerException(500, "Uploader not configured")
-                    call.receiveMultipartMap<T>(uploader)
+                    call.receiveMultipartMap<T>(uploader) { map ->
+                        ownerForbiddenAttributes.forEach {
+                            if (map.containsKey(it)) throw ForbiddenException("Cannot change $it")
+                        }
+                    }
                 } else {
-                    call.receiveMap<T>()
+                    val map = call.receiveMap<T>()
+                    ownerForbiddenAttributes.forEach {
+                        if (map.containsKey(it)) throw ForbiddenException("Cannot change $it")
+                    }
+                    map
                 }
 
                 (patch["role"] as? String)?.let {
@@ -453,7 +504,6 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                         }
                     }
                 }
-
                 call.respond(HttpStatusCode.OK, repository.updateOneById(call.userAuth.userId.mongoId(), patch))
             } catch (e: Exception) {
                 call.respondWithException(e)
@@ -477,6 +527,25 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 call.respondWithException(e)
                 configuration.exceptionHandler?.invoke(call, e)
             }
+        }
+    }
+
+    get("$endpoint/auth/verify/{code}") {
+        try {
+            val code = call.parameters["code"] ?: throw BadRequestException("Missing code")
+            val userConfirmation = emailConfirmationRepository.findOne(UserConfirmation::code eq code)
+            if (userConfirmation.confirmed) throw ServerException(400, "E-mail already confirmed")
+
+            repository.updateOne(KDoneUser::_id eq userConfirmation.userId, mapOf("confirmed" to true))
+
+            emailConfirmationRepository.updateOne(UserConfirmation::_id eq userConfirmation._id, mapOf("confirmed" to true, "dateUpdated" to Date()))
+            if (emailConfirmationConfiguration?.redirectURL != null) {
+                call.respondRedirect(emailConfirmationConfiguration.redirectURL, true)
+            } else {
+                call.respond(HttpStatusCode.OK, mapOf("status" to "Confirmed"))
+            }
+        } catch (e: Exception) {
+            call.respondWithException(e)
         }
     }
 

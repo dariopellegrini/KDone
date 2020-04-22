@@ -1,5 +1,6 @@
 package com.dariopellegrini.kdone.extensions
 
+import java.net.URI
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -37,3 +38,5 @@ val String.dateOrNull: Date?
             null
         }
     }
+
+val String.normalizeURL get() = URI(this).normalize().toString()

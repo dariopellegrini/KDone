@@ -6,15 +6,19 @@ import org.litote.kmongo.newId
 
 abstract class KDoneUser {
     abstract var username: String
-    abstract var password: String?
+    open var password: String? = null
     val _id: Id<KDoneUser> = newId()
 
     open var role: String? = null
+
+    open var confirmed: Boolean? = null
 
     open var facebookId: String? = null
     open var appleId: String? = null
     open var googleId: String? = null
 }
+
+val ownerForbiddenAttributes = listOf("_id", "password", "role", "confirmed", "facebookId", "appleId", "googleId")
 
 data class LoginInput(val username: String, val password: String)
 
