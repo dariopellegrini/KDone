@@ -106,6 +106,7 @@ inline fun <reified T: KDoneUser>Route.apple(bundleId: String,
                         input
                     }
                     input.appleId = appleId
+                    input.confirmed = true
 
                     repository.insert(input)
 

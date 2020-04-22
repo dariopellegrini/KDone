@@ -107,6 +107,7 @@ inline fun <reified T: KDoneUser>Route.facebook(appId: String,
                         input
                     }
                     input.facebookId = facebookId
+                    input.confirmed = true
 
                     repository.insert(input)
 

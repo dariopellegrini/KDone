@@ -105,6 +105,7 @@ inline fun <reified T: KDoneUser>Route.google(clientId: String,
                         input
                     }
                     input.googleId = googleId
+                    input.confirmed = true
 
                     repository.insert(input)
 
