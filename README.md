@@ -72,7 +72,7 @@ This configuration will also open these endpoints for User model:
 - POST http://localhost:23146/users performs a user signup
 - GET http://localhost:23146/users/profile/me with token returns the current user
 - PATCH http://localhost:23146/users/profile/me with token performs update on the current user
-- DELETE http://localhost:23146/users/profile/me with token delets current user
+- DELETE http://localhost:23146/users/profile/me with token delete current user
 
 Other functionalities:
 - Permissions for users and models
