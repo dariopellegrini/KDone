@@ -29,6 +29,7 @@ import io.ktor.routing.*
 import io.ktor.util.toMap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import org.bson.types.ObjectId
 import org.litote.kmongo.and
 import org.litote.kmongo.eq
 import org.litote.kmongo.json
@@ -57,12 +58,16 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 val userAuth = call.userAuthOrNull
                 val shouldCheckOwner = checkPermission(userAuth, configuration.authorization, AuthEnum.READ)
 
+                if (!configuration.mongoQueriesEnabled && call.request.queryParameters.contains(queryParameter))
+                    throw ForbiddenException("Forbidden parameter")
+
                 // Filters
                 val queryMap = mutableMapOf<String, Any>()
                 call.request.queryParameters.toMap()
                     .filter { it.key != queryParameter && it.key != limitParameter  && it.key != skipParameter }
                     .map { it.key to it.value.first() }.map { pair ->
                         when {
+                            ObjectId.isValid(pair.second) -> queryMap[pair.first] = ObjectId(pair.second)
                             pair.second.toIntOrNull() != null -> queryMap[pair.first] = pair.second.toInt()
                             pair.second.toDoubleOrNull() != null -> queryMap[pair.first] = pair.second.toDouble()
                             pair.second == "true" -> queryMap[pair.first] = true

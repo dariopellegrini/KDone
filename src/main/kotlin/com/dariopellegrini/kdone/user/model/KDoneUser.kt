@@ -22,6 +22,5 @@ val ownerForbiddenAttributes = listOf("_id", "password", "role", "confirmed", "f
 
 data class LoginInput(val username: String, val password: String)
 
-//
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class UsernameInput(val username: String)

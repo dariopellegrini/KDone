@@ -32,6 +32,8 @@ class RouteConfiguration<T: Any> {
 
     var exceptionHandler: ((ApplicationCall, Exception) -> Unit)? = null
 
+    var mongoQueriesEnabled = true
+
     fun authorizations(closure: Authorization.() -> Unit) {
         val authorization = Authorization()
         authorization.closure()
