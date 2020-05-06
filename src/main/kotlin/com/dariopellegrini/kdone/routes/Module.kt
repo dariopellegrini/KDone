@@ -58,7 +58,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 val userAuth = call.userAuthOrNull
                 val shouldCheckOwner = checkPermission(userAuth, configuration.authorization, AuthEnum.READ)
 
-                if (!configuration.mongoQueriesEnabled && call.request.queryParameters.contains(queryParameter))
+                if (configuration.mongoQueriesDisabled && call.request.queryParameters.contains(queryParameter))
                     throw ForbiddenException("Forbidden parameter")
 
                 // Filters

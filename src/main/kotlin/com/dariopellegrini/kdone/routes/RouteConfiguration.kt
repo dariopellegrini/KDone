@@ -32,7 +32,7 @@ class RouteConfiguration<T: Any> {
 
     var exceptionHandler: ((ApplicationCall, Exception) -> Unit)? = null
 
-    var mongoQueriesEnabled = true
+    var mongoQueriesDisabled = false
 
     fun authorizations(closure: Authorization.() -> Unit) {
         val authorization = Authorization()
@@ -40,12 +40,12 @@ class RouteConfiguration<T: Any> {
         this.authorization = authorization
     }
 
-    fun s3Uploader(baseFolder: String, // "kdone"
-                   baseURL: String, // "https://dariopellegrini.ams3.digitaloceanspaces.com"
-                   bucketName: String, // "dariopellegrini"
-                   accessKey: String, // "2BPF5WP5MVYNGOTYXUDH"
-                   secretKey: String, // "eUt3KeIQyeObhI4zXGoW7vrtjuPxrWuo2FJHsBDdJ2M"
-                   serviceEndpoint: String, // "https://ams3.digitaloceanspaces.com"
+    fun s3Uploader(baseFolder: String,
+                   baseURL: String,
+                   bucketName: String,
+                   accessKey: String,
+                   secretKey: String,
+                   serviceEndpoint: String,
                    signingRegion: String) {
         uploader = S3Uploader(baseFolder, baseURL, bucketName, accessKey, secretKey, serviceEndpoint, signingRegion)
     }
