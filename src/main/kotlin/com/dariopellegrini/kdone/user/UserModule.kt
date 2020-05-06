@@ -411,6 +411,8 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
     post("$endpoint/auth/login") {
         try {
+            if (configuration.loginDisabled) throw ForbiddenException("Forbidden operation")
+
             val input = call.receive<LoginInput>()
 
             val user = if (configuration.hashStrategy != null) {
