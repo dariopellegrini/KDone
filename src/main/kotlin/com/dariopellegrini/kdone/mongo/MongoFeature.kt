@@ -2,13 +2,11 @@ package com.dariopellegrini.kdone.mongo
 
 import com.dariopellegrini.kdone.delegates.Delegate
 import com.dariopellegrini.kdone.exceptions.MisconfigurationException
-import com.mongodb.MongoClientURI
 import com.mongodb.client.MongoDatabase
 import io.ktor.application.ApplicationCall
 import io.ktor.application.ApplicationCallPipeline
 import io.ktor.application.ApplicationFeature
 import io.ktor.util.AttributeKey
-import org.litote.kmongo.KMongo
 
 class MongoFeature(configuration: Configuration) {
     val mongo = configuration.mongo // Copies a snapshot of the mutable config into an immutable property.
