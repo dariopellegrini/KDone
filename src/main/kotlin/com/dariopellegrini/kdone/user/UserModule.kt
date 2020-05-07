@@ -6,6 +6,7 @@ import auth.userAuthOrNull
 import com.dariopellegrini.kdone.application.database
 import com.dariopellegrini.kdone.application.jwtConfiguration
 import com.dariopellegrini.kdone.auth.*
+import com.dariopellegrini.kdone.constants.passwordsRecoveryCollection
 import com.dariopellegrini.kdone.constants.queryParameter
 import com.dariopellegrini.kdone.constants.usersConfirmationsCollection
 import com.dariopellegrini.kdone.constants.usersTokensCollection
@@ -15,6 +16,7 @@ import com.dariopellegrini.kdone.exceptions.*
 import com.dariopellegrini.kdone.extensions.*
 import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.mongo.MongoRepository
+import com.dariopellegrini.kdone.passwordrecovery.model.PasswordRecovery
 import com.dariopellegrini.kdone.user.model.*
 import com.dariopellegrini.kdone.user.social.apple.apple
 import com.dariopellegrini.kdone.user.social.facebook.facebook
@@ -56,6 +58,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
     // users_token should be reserved
     val tokenRepository = MongoRepository(database, usersTokensCollection, UserToken::class.java)
     val emailConfirmationRepository = MongoRepository(database, usersConfirmationsCollection, UserConfirmation::class.java)
+    val passwordRecoveryRepository = MongoRepository(database, passwordsRecoveryCollection, PasswordRecovery::class.java)
 
     T::class.java.geoIndexJson?.forEach {
         repository.createIndex(it)
@@ -543,7 +546,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 val currentHashedPassword = if (configuration.hashStrategy != null)
                     configuration.hashStrategy!!.hash(input.currentPassword) else sha512(input.currentPassword)
 
-                if (user.password != currentHashedPassword) throw ForbiddenException("Password not correct")
+                if (user.password != currentHashedPassword) throw ForbiddenException("Incorrect password")
 
                 val newPasswordHashed = if (configuration.hashStrategy != null)
                     configuration.hashStrategy!!.hash(input.newPassword) else sha512(input.newPassword)
@@ -555,7 +558,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     tokenRepository.deleteMany(UserToken::token ne token)
                 }
 
-                call.respond(HttpStatusCode.OK, mapOf("result" to "Password changed successful"))
+                call.respond(HttpStatusCode.OK, mapOf("status" to "Password changed successful"))
             } catch (e: Exception) {
                 call.respondWithException(e)
             }
@@ -575,6 +578,58 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 call.respondRedirect(emailConfirmationConfiguration.redirectURL, true)
             } else {
                 call.respond(HttpStatusCode.OK, mapOf("status" to "Confirmed"))
+            }
+        } catch (e: Exception) {
+            call.respondWithException(e)
+        }
+    }
+
+    // Password recovery
+    post("$endpoint/password/recovery") {
+        try {
+            val passwordRecoveryConfiguration = configuration.passwordRecoveryConfiguration
+                ?: throw ServerException(HttpStatusCode.NotImplemented.value, "Not configured")
+            val input = call.receive<PasswordRecoveryInput>()
+            val user = repository.findOne(KDoneUser::username eq input.email)
+
+            if (user.password == null) throw ForbiddenException()
+
+            val newPasswordHashed = if (configuration.hashStrategy != null)
+                configuration.hashStrategy!!.hash(input.newPassword) else sha512(input.newPassword)
+
+            passwordRecoveryRepository.deleteMany(PasswordRecovery::userId eq user._id)
+            val passwordRecovery = PasswordRecovery(user._id, user.username, randomString(32), newPasswordHashed)
+            passwordRecoveryRepository.insert(passwordRecovery)
+
+            val link = "${passwordRecoveryConfiguration.baseURL}/$endpoint/password/recovery/verify/${passwordRecovery.code}".normalizeURL
+            val message = passwordRecoveryConfiguration.emailSenderClosure(link)
+            passwordRecoveryConfiguration.emailSender.send(
+                message.sender.name to message.sender.address,
+                input.email to input.email,
+                message.subject, message.message)
+            logger.info("Password recovery e-mail sent for ${input.email}")
+            call.respond(HttpStatusCode.OK, mapOf("status" to "Password recovery e-mail sent to ${input.email}"))
+            if (emailConfirmationConfiguration?.redirectURL != null) {
+                call.respondRedirect(emailConfirmationConfiguration.redirectURL, true)
+            } else {
+                call.respond(HttpStatusCode.OK, mapOf("status" to "Password recovery e-mail sent to ${input.email}"))
+            }
+        } catch (e: Exception) {
+            call.respondWithException(e)
+        }
+    }
+
+    get("$endpoint/password/recovery/verify/{code}") {
+        try {
+            val code = call.parameters["code"] ?: throw BadRequestException("Missing code")
+            val passwordRecovery = passwordRecoveryRepository.findOneOrNull(
+                PasswordRecovery::code eq code,
+                PasswordRecovery::active eq true) ?: throw ForbiddenException("Already confirmed")
+            repository.updateOneById(passwordRecovery.userId as Id<T>, mapOf("password" to passwordRecovery.newPassword))
+            if (emailConfirmationConfiguration?.redirectURL != null) {
+                call.respondRedirect(emailConfirmationConfiguration.redirectURL, true)
+            } else {
+                call.respond(HttpStatusCode.OK, mapOf("result" to "Password changed successful"))
             }
         } catch (e: Exception) {
             call.respondWithException(e)
