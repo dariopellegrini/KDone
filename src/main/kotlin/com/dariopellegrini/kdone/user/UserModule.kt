@@ -15,10 +15,7 @@ import com.dariopellegrini.kdone.exceptions.*
 import com.dariopellegrini.kdone.extensions.*
 import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.mongo.MongoRepository
-import com.dariopellegrini.kdone.user.model.KDoneUser
-import com.dariopellegrini.kdone.user.model.LoginInput
-import com.dariopellegrini.kdone.user.model.UserToken
-import com.dariopellegrini.kdone.user.model.ownerForbiddenAttributes
+import com.dariopellegrini.kdone.user.model.*
 import com.dariopellegrini.kdone.user.social.apple.apple
 import com.dariopellegrini.kdone.user.social.facebook.facebook
 import com.dariopellegrini.kdone.user.social.google.google
@@ -168,7 +165,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                             message.sender.name to message.sender.address,
                             input.username to input.username,
                             message.subject, message.message)
-                        logger.info("E-mail sent")
+                        logger.info("E-mail sent for ${input.username}")
                     } catch (e: Exception) {
                         logger.error(e)
                     }
@@ -528,6 +525,39 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             } catch (e: Exception) {
                 call.respondWithException(e)
                 configuration.exceptionHandler?.invoke(call, e)
+            }
+        }
+
+        // Password
+        patch("$endpoint/profile/me/password") {
+            try {
+                val userAuth = call.userAuth
+                if (!configuration.authorization.checkOwner(update)) throw NotAuthorizedException()
+                call.checkToken(this@authenticate.database)
+
+                val user = repository.findOneOrNull(KDoneUser::_id eq userAuth.userId.mongoId()) ?: throw NotAuthorizedException()
+                if (user.password == null) throw BadRequestException("Impossible to change password for this user: password not found")
+
+                val input = call.receive<PasswordChangeInput>()
+
+                val currentHashedPassword = if (configuration.hashStrategy != null)
+                    configuration.hashStrategy!!.hash(input.currentPassword) else sha512(input.currentPassword)
+
+                if (user.password != currentHashedPassword) throw ForbiddenException("Password not correct")
+
+                val newPasswordHashed = if (configuration.hashStrategy != null)
+                    configuration.hashStrategy!!.hash(input.newPassword) else sha512(input.newPassword)
+
+                repository.updateOneById(userAuth.userId.mongoId(), mapOf("password" to newPasswordHashed))
+
+                if (input.invalidateOtherSessions == true) {
+                    val token = call.request.headers["Authorization"]?.removePrefix("Bearer ")
+                    tokenRepository.deleteMany(UserToken::token ne token)
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf("result" to "Password changed successful"))
+            } catch (e: Exception) {
+                call.respondWithException(e)
             }
         }
     }

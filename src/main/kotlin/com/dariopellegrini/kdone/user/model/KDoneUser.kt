@@ -24,3 +24,6 @@ data class LoginInput(val username: String, val password: String)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class UsernameInput(val username: String)
+
+data class StandardUser(override var username: String,
+                        override var password: String?): KDoneUser()
