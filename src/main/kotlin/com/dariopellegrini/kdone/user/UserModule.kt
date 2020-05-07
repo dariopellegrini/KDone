@@ -608,12 +608,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 input.email to input.email,
                 message.subject, message.message)
             logger.info("Password recovery e-mail sent for ${input.email}")
-            call.respond(HttpStatusCode.OK, mapOf("status" to "Password recovery e-mail sent to ${input.email}"))
-            if (emailConfirmationConfiguration?.redirectURL != null) {
-                call.respondRedirect(emailConfirmationConfiguration.redirectURL, true)
-            } else {
-                call.respond(HttpStatusCode.OK, mapOf("status" to "Password recovery e-mail sent to ${input.email}"))
-            }
+            call.respond(HttpStatusCode.OK, mapOf("status" to "Password recovery e-mail sent", "email" to input.email))
         } catch (e: Exception) {
             call.respondWithException(e)
         }
@@ -625,7 +620,9 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             val passwordRecovery = passwordRecoveryRepository.findOneOrNull(
                 PasswordRecovery::code eq code,
                 PasswordRecovery::active eq true) ?: throw ForbiddenException("Already confirmed")
-            repository.updateOneById(passwordRecovery.userId as Id<T>, mapOf("password" to passwordRecovery.newPassword))
+            repository.updateOne(KDoneUser::_id eq passwordRecovery.userId, mapOf("password" to passwordRecovery.newPassword))
+            passwordRecoveryRepository.updateOne(PasswordRecovery::code eq code,
+                mapOf("active" to false, "dateUpdated" to Date()))
             if (emailConfirmationConfiguration?.redirectURL != null) {
                 call.respondRedirect(emailConfirmationConfiguration.redirectURL, true)
             } else {

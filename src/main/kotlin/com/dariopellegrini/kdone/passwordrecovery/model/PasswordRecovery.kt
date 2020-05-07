@@ -12,6 +12,6 @@ class PasswordRecovery(val userId: Id<KDoneUser>,
                        val newPassword: String,
                        override var dateCreated: Date = Date(),
                        override var dateUpdated: Date= Date()): DateModel {
-    val _id: Id<Any> = newId()
+    val _id: Id<PasswordRecovery> = newId()
     var active = true
 }

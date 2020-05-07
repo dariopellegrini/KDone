@@ -12,5 +12,5 @@ class UserConfirmation(val userId: Id<KDoneUser>,
                           var confirmed: Boolean,
                           override var dateCreated: Date = Date(),
                           override var dateUpdated: Date= Date()): DateModel {
-    val _id: Id<Any> = newId()
+    val _id: Id<UserConfirmation> = newId()
 }
