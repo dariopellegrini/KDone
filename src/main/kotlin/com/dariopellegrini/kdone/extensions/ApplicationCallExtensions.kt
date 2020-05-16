@@ -1,5 +1,6 @@
 package com.dariopellegrini.kdone.extensions
 
+import auth.mongoId
 import com.dariopellegrini.kdone.model.DateModel
 import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.uploader.Uploader
@@ -12,7 +13,9 @@ import io.ktor.http.content.readAllParts
 import io.ktor.request.receive
 import io.ktor.request.receiveMultipart
 import kotlinx.coroutines.*
+import org.bson.types.ObjectId
 import org.json.simple.JSONObject
+import org.litote.kmongo.Id
 import java.io.IOException
 import java.util.*
 import kotlin.reflect.KClass
@@ -36,9 +39,10 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMap(): Map<String, Any
 
         when {
             entry.value is Map<*, *> -> {
-                val element = ObjectMapper().registerModule(KotlinModule()).readValue<T>(JSONObject((entry.value as Map<*, *>)).toString())
+                val element = ObjectMapper().configureForKDone().convertValue(entry.value, property.returnType.jvmErasure.java)
                 resultMap[key] = element
             }
+            property.returnType.jvmErasure.isSubclassOf(Id::class) && value is String && ObjectId.isValid(value) -> resultMap[key] = value.mongoId<Any>()
             property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
             else -> throw IOException("$key is not instance of ${property.returnType}")
         }
@@ -87,9 +91,14 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMultipartMap(
 
             when {
                 entry.value is Map<*, *> -> {
-                    val element = ObjectMapper().registerModule(KotlinModule()).readValue<T>(JSONObject((entry.value as Map<*, *>)).toString())
+                    val element = ObjectMapper().configureForKDone().convertValue(entry.value, property.returnType.jvmErasure.java)
                     resultMap[key] = element
                 }
+                value is String && (value.trimStart().startsWith("{") && value.trimEnd().endsWith("}") ||
+                        value.trimStart().startsWith("[") && value.trimEnd().endsWith("]")) -> {
+                    resultMap[key] = ObjectMapper().configureForKDone().readValue(value, property.returnType.jvmErasure.java)
+                }
+                property.returnType.jvmErasure.isSubclassOf(Id::class) && value is String && ObjectId.isValid(value) -> resultMap[key] = value.mongoId<Any>()
                 property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
                 else -> throw IOException("$key is not instance of ${property.returnType}")
             }
@@ -144,9 +153,14 @@ suspend fun <T: Any>ApplicationCall.receiveMap(kClass: KClass<T>): Map<String, A
 
         when {
             entry.value is Map<*, *> -> {
-                val element = ObjectMapper().registerModule(KotlinModule()).readValue(JSONObject((entry.value as Map<*, *>)).toString(), kClass.java)
+                val element = ObjectMapper().configureForKDone().convertValue(entry.value, property.returnType.jvmErasure.java)
                 resultMap[key] = element
             }
+            value is String && (value.trimStart().startsWith("{") && value.trimEnd().endsWith("}") ||
+                    value.trimStart().startsWith("[") && value.trimEnd().endsWith("]")) -> {
+                resultMap[key] = ObjectMapper().configureForKDone().readValue(value, property.returnType.jvmErasure.java)
+            }
+            property.returnType.jvmErasure.isSubclassOf(Id::class) && value is String && ObjectId.isValid(value) -> resultMap[key] = value.mongoId<Any>()
             property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
             else -> throw IOException("$key is not instance of ${property.returnType}")
         }
@@ -193,9 +207,10 @@ suspend fun <T: Any>ApplicationCall.receiveMultipartMap(
 
             when {
                 entry.value is Map<*, *> -> {
-                    val element = ObjectMapper().registerModule(KotlinModule()).readValue(JSONObject((entry.value as Map<*, *>)).toString(), kClass.java)
+                    val element = ObjectMapper().configureForKDone().convertValue(entry.value, property.returnType.jvmErasure.java)
                     resultMap[key] = element
                 }
+                property.returnType.jvmErasure.isSubclassOf(Id::class) && value is String && ObjectId.isValid(value) -> resultMap[key] = value.mongoId<Any>()
                 property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
                 else -> throw IOException("$key is not instance of ${property.returnType}")
             }

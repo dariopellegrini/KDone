@@ -35,14 +35,15 @@ import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.util.*
 
-inline fun <reified T: KDoneUser>Route.apple(bundleId: String,
-                   repository: MongoRepository<T>,
-                   tokenRepository: MongoRepository<UserToken>,
-                   jwtConfig: JWTConfig,
-                   configuration: UserRouteConfiguration<T>) {
+inline fun <reified T: KDoneUser>Route.apple(endpoint: String = "users",
+                                             bundleId: String,
+                                             repository: MongoRepository<T>,
+                                             tokenRepository: MongoRepository<UserToken>,
+                                             jwtConfig: JWTConfig,
+                                             configuration: UserRouteConfiguration<T>) {
 
     authenticate("jwt", optional = true) {
-        post("apple/access") {
+        post("$endpoint/apple/access") {
             try {
                 val userAuth = call.userAuthOrNull
 

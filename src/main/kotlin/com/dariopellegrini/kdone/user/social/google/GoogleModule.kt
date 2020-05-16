@@ -32,7 +32,8 @@ import org.litote.kmongo.eq
 import java.util.*
 
 
-inline fun <reified T: KDoneUser>Route.google(clientId: String,
+inline fun <reified T: KDoneUser>Route.google(endpoint: String = "users",
+                                              clientId: String,
                                               clientSecret: String,
                                               redirectURL: String,
                                               repository: MongoRepository<T>,
@@ -41,7 +42,7 @@ inline fun <reified T: KDoneUser>Route.google(clientId: String,
                                               configuration: UserRouteConfiguration<T>) {
 
     authenticate("jwt", optional = true) {
-        post("google/access") {
+        post("$endpoint/google/access") {
             try {
                 val userAuth = call.userAuthOrNull
 

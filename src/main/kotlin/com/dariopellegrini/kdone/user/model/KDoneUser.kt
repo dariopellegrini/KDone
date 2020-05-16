@@ -16,6 +16,8 @@ abstract class KDoneUser {
     open var facebookId: String? = null
     open var appleId: String? = null
     open var googleId: String? = null
+
+    open var otp: Boolean? = null
 }
 
 val ownerForbiddenAttributes = listOf("_id", "password", "role", "confirmed", "facebookId", "appleId", "googleId")

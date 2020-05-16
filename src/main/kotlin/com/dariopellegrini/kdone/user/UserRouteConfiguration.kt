@@ -3,8 +3,9 @@ package com.dariopellegrini.kdone.user
 import com.dariopellegrini.kdone.auth.UserAuthorization
 import com.dariopellegrini.kdone.email.EmailConfirmationConfiguration
 import com.dariopellegrini.kdone.passwordrecovery.PasswordRecoveryConfiguration
-import com.dariopellegrini.kdone.email.EmailSender
+import com.dariopellegrini.kdone.email.EmailClient
 import com.dariopellegrini.kdone.email.model.EmailMessage
+import com.dariopellegrini.kdone.sender.UserSender
 import com.dariopellegrini.kdone.uploader.S3Uploader
 import com.dariopellegrini.kdone.uploader.Uploader
 import com.dariopellegrini.kdone.user.hash.HashStrategy
@@ -13,6 +14,7 @@ import com.dariopellegrini.kdone.user.model.LoginInput
 import com.dariopellegrini.kdone.user.social.apple.AppleConfiguration
 import com.dariopellegrini.kdone.user.social.facebook.FacebookConfiguration
 import com.dariopellegrini.kdone.user.social.google.GoogleConfiguration
+import com.dariopellegrini.kdone.utils.randomString
 import com.mongodb.client.result.DeleteResult
 import io.ktor.application.ApplicationCall
 import org.litote.kmongo.Id
@@ -55,6 +57,11 @@ open class UserRouteConfiguration<T: KDoneUser> {
     var emailConfirmationConfiguration: EmailConfirmationConfiguration? = null
 
     var passwordRecoveryConfiguration: PasswordRecoveryConfiguration? = null
+
+    // OTP
+    var otpEnabled = false
+    var otpSenders: List<UserSender<T>>? = null
+    var otpCodeGenerator: (() -> String)? = null
 
     fun authorizations(closure: UserAuthorization.() -> Unit) {
         authorization.closure()
@@ -139,23 +146,29 @@ open class UserRouteConfiguration<T: KDoneUser> {
         exceptionHandler = closure
     }
 
-    fun emailConfirmation(emailSender: EmailSender,
+    fun emailConfirmation(emailClient: EmailClient,
                           baseURL: String,
                           redirectURL: String,
                           emailSenderClosure: (String) -> EmailMessage) {
-        emailConfirmationConfiguration = EmailConfirmationConfiguration(emailSender, baseURL, redirectURL, emailSenderClosure)
+        emailConfirmationConfiguration = EmailConfirmationConfiguration(emailClient, baseURL, redirectURL, emailSenderClosure)
     }
 
-    fun passwordRecovery(emailSender: EmailSender,
-                          baseURL: String,
-                          redirectURL: String,
-                          emailSenderClosure: (String) -> EmailMessage) {
+    fun passwordRecovery(emailClient: EmailClient,
+                         baseURL: String,
+                         redirectURL: String,
+                         emailSenderClosure: (String) -> EmailMessage) {
         passwordRecoveryConfiguration =
             PasswordRecoveryConfiguration(
-                emailSender,
+                emailClient,
                 baseURL,
                 redirectURL,
                 emailSenderClosure
             )
+    }
+
+    fun otp(vararg senders: UserSender<T>, codeGenerator: (() -> String)? = null) {
+        otpEnabled = true
+        otpSenders = senders.toList()
+        otpCodeGenerator = codeGenerator
     }
 }

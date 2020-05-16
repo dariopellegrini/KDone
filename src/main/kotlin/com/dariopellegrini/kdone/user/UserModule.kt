@@ -18,6 +18,7 @@ import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.dariopellegrini.kdone.passwordrecovery.model.PasswordRecovery
 import com.dariopellegrini.kdone.user.model.*
+import com.dariopellegrini.kdone.user.otp.otpModule
 import com.dariopellegrini.kdone.user.social.apple.apple
 import com.dariopellegrini.kdone.user.social.facebook.facebook
 import com.dariopellegrini.kdone.user.social.google.google
@@ -164,7 +165,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     val link = "${emailConfirmationConfiguration.baseURL}/$endpoint/auth/verify/$code".normalizeURL
                     val message = emailConfirmationConfiguration.emailSenderClosure(link)
                     try {
-                        emailConfirmationConfiguration.emailSender.send(
+                        emailConfirmationConfiguration.emailClient.send(
                             message.sender.name to message.sender.address,
                             input.username to input.username,
                             message.subject, message.message)
@@ -369,7 +370,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                         }
                         // Guest
                         else -> {
-                            if (!configuration.authorization.check(guest, delete, user.role ?: registered.rawValue)) throw ForbiddenException()
+                            if (!configuration.authorization.check(guest, update, user.role ?: registered.rawValue)) throw ForbiddenException()
                             role?.let {
                                 if (!configuration.authorization.check(guest, create, it)) throw ForbiddenException()
                             }
@@ -636,15 +637,18 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
     // Social
 
     configuration.facebook?.let {
-        facebook(it.appId, it.appSecret, repository, tokenRepository, jwtConfig, configuration)
+        facebook(endpoint, it.appId, it.appSecret, repository, tokenRepository, jwtConfig, configuration)
     }
 
     configuration.apple?.let {
-        apple(it.bundleId, repository, tokenRepository, jwtConfig, configuration)
+        apple(endpoint, it.bundleId, repository, tokenRepository, jwtConfig, configuration)
     }
 
     configuration.google?.let {
-        google(it.clientId, it.clientSecret, it.redirectURL, repository, tokenRepository, jwtConfig, configuration)
+        google(endpoint, it.clientId, it.clientSecret, it.redirectURL, repository, tokenRepository, jwtConfig, configuration)
     }
+
+    // OTP
+    otpModule(endpoint, repository, tokenRepository, jwtConfig, configuration)
 }
 

@@ -8,7 +8,7 @@ import org.simplejavamail.mailer.MailerBuilder
 import org.simplejavamail.mailer.internal.MailerRegularBuilderImpl
 
 
-class EmailSender(val host: String,
+class EmailClient(val host: String,
                   val username: String,
                   val password: String,
                   val port: Int = 465,
@@ -39,6 +39,6 @@ fun smtpClient(host: String,
                username: String,
                password: String,
                port: Int = 465,
-               buildConfiguration: (MailerRegularBuilderImpl.() -> Unit)? = null): EmailSender {
-    return EmailSender(host, username, password, port, buildConfiguration)
+               buildConfiguration: (MailerRegularBuilderImpl.() -> Unit)? = null): EmailClient {
+    return EmailClient(host, username, password, port, buildConfiguration)
 }

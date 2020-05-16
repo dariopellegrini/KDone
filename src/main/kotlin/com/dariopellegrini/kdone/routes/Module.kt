@@ -15,6 +15,7 @@ import com.dariopellegrini.kdone.exceptions.BadRequestException
 import com.dariopellegrini.kdone.exceptions.ForbiddenException
 import com.dariopellegrini.kdone.exceptions.ServerException
 import com.dariopellegrini.kdone.extensions.*
+import com.dariopellegrini.kdone.model.DateModel
 import com.dariopellegrini.kdone.model.Identifiable
 import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.mongo.MongoRepository
@@ -34,6 +35,7 @@ import org.litote.kmongo.and
 import org.litote.kmongo.eq
 import org.litote.kmongo.json
 import org.litote.kmongo.util.KMongoUtil
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.isSubclassOf
@@ -187,6 +189,12 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     }
                 }
 
+                // Configure dates
+                if (element is DateModel) {
+                    element.dateCreated = Date()
+                    element.dateUpdated = Date()
+                }
+
                 configuration.beforeCreate?.let {
                     it(call, element)
                 }
@@ -241,6 +249,11 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     } else {
                         call.receiveMap<T>()
                     }
+                }
+
+                // Configure date
+                if (element is DateModel) {
+                    element.dateUpdated = Date()
                 }
 
                 if (shouldCheckOwner) {

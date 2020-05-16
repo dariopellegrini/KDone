@@ -27,15 +27,16 @@ import io.ktor.routing.post
 import org.litote.kmongo.eq
 import java.util.*
 
-inline fun <reified T: KDoneUser>Route.facebook(appId: String,
-                   appSecret: String,
-                   repository: MongoRepository<T>,
-                   tokenRepository: MongoRepository<UserToken>,
-                   jwtConfig: JWTConfig,
-                   configuration: UserRouteConfiguration<T>) {
+inline fun <reified T: KDoneUser>Route.facebook(endpoint: String = "users",
+                                                appId: String,
+                                                appSecret: String,
+                                                repository: MongoRepository<T>,
+                                                tokenRepository: MongoRepository<UserToken>,
+                                                jwtConfig: JWTConfig,
+                                                configuration: UserRouteConfiguration<T>) {
 
     authenticate("jwt", optional = true) {
-        post("facebook/access") {
+        post("$endpoint/facebook/access") {
             try {
                 val userAuth = call.userAuthOrNull
 
