@@ -649,6 +649,8 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
     }
 
     // OTP
-    otpModule(endpoint, repository, tokenRepository, jwtConfig, configuration)
+    if (configuration.otpEnabled == true) {
+        otpModule(endpoint, repository, tokenRepository, jwtConfig, configuration)
+    }
 }
 
