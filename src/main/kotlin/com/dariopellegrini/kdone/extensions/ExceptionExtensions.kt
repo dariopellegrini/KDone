@@ -5,6 +5,7 @@ import com.auth0.jwt.exceptions.TokenExpiredException
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.dariopellegrini.kdone.exceptions.*
+import com.mongodb.MongoWriteException
 import io.ktor.application.ApplicationCall
 import io.ktor.features.UnsupportedMediaTypeException
 import io.ktor.http.HttpStatusCode
@@ -109,6 +110,9 @@ suspend fun ApplicationCall.respondWithException(e: Exception) {
             HttpStatusCode(HttpStatusCode.BadRequest.value, "Bad request"),
             mapOf("error" to e.localizedMessage))
         is MapCheckException -> respond(
+            HttpStatusCode(HttpStatusCode.BadRequest.value, "Bad request"),
+            mapOf("error" to e.localizedMessage))
+        is MongoWriteException -> respond(
             HttpStatusCode(HttpStatusCode.BadRequest.value, "Bad request"),
             mapOf("error" to e.localizedMessage))
         else -> respond(
