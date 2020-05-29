@@ -47,6 +47,7 @@ import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.jvmErasure
 
 inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
+                                                   collectionName: String? = null,
                                                    configure: UserRouteConfiguration<T>.() -> Unit = {}) {
 
     val configuration = UserRouteConfiguration<T>()
@@ -54,7 +55,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
     val jwtConfig = jwtConfiguration
 
-    val repository = MongoRepository(database, endpoint, T::class.java)
+    val repository = MongoRepository(database, collectionName ?: endpoint, T::class.java)
 
     // users_token should be reserved
     val tokenRepository = MongoRepository(database, usersTokensCollection, UserToken::class.java)

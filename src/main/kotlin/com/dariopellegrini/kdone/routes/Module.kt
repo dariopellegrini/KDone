@@ -18,6 +18,7 @@ import com.dariopellegrini.kdone.extensions.*
 import com.dariopellegrini.kdone.model.DateModel
 import com.dariopellegrini.kdone.model.Identifiable
 import com.dariopellegrini.kdone.model.ResourceFile
+import com.dariopellegrini.kdone.languages.localize
 import com.dariopellegrini.kdone.mongo.MongoRepository
 import io.ktor.application.call
 import io.ktor.auth.authenticate
@@ -42,11 +43,12 @@ import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.jvmErasure
 
 inline fun <reified T : Any>Route.module(endpoint: String,
-                                              configure: RouteConfiguration<T>.() -> Unit = {}) {
+                                         collectionName: String? = null,
+                                         configure: RouteConfiguration<T>.() -> Unit = {}) {
 
     val configuration = RouteConfiguration<T>()
     configuration.configure()
-    val repository = MongoRepository(database, endpoint, T::class.java)
+    val repository = MongoRepository(database, collectionName ?: endpoint, T::class.java)
 
     T::class.java.geoIndexJson?.forEach {
         repository.createIndex(it)
@@ -96,7 +98,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     KMongoUtil.toBson(query)), limit, skip)
                 else repository.findAll(query, limit = limit, skip = skip)
 
-                if (configuration.dtoConfiguration != null) {
+                val responseElements = if (configuration.dtoConfiguration != null) {
                     val dtoElements = elements.map {
                         val dtoRead = configuration.dtoConfiguration?.readDTO(userAuth, it) ?: return@map it
                         when {
@@ -105,9 +107,17 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                             else -> it.transfer(T::class, dtoRead.kClass)
                         }
                     }
-                    call.respond(HttpStatusCode.OK, dtoElements)
+                    dtoElements
                 } else {
-                    call.respond(HttpStatusCode.OK, elements)
+                    elements
+                }
+
+                // Localization
+                if (call.language != null) {
+                    call.respond(HttpStatusCode.OK,
+                        responseElements.map { it.localize(call.language!!, configuration.defaultLanguage) })
+                } else {
+                    call.respond(HttpStatusCode.OK, responseElements)
                 }
 
                 configuration.afterGet?.let {
@@ -135,15 +145,22 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 }
 
                 val dtoRead = configuration.dtoConfiguration?.readDTO(call.userAuthOrNull, element)
-                if (dtoRead != null) {
+                val responseElement = if (dtoRead != null) {
                     val dtoElement = when {
                         dtoRead.init != null -> dtoRead.init.invoke(element)
                         dtoRead.closure != null -> element.transfer(T::class, dtoRead.kClass, dtoRead.closure)
                         else -> element.transfer(T::class, dtoRead.kClass)
                     }
-                    call.respond(HttpStatusCode.OK, dtoElement)
+                    dtoElement
                 } else {
-                    call.respond(HttpStatusCode.OK, element)
+                    element
+                }
+
+                // Localization
+                if (call.language != null) {
+                    call.respond(HttpStatusCode.OK, responseElement.localize(call.language!!, configuration.defaultLanguage))
+                } else {
+                    call.respond(HttpStatusCode.OK, responseElement)
                 }
 
                 configuration.afterGet?.let {

@@ -249,3 +249,5 @@ suspend fun <T: Any>ApplicationCall.receiveMultipartMap(
 
     return resultMap
 }
+
+val ApplicationCall.language get() = request.headers["Accept-Language"]

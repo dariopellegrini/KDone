@@ -39,6 +39,7 @@ fun Application.installKDone(mongoDatabase: MongoDatabase,
         header(HttpHeaders.AccessControlAllowOrigin)
         header(HttpHeaders.AccessControlAllowHeaders)
         header(HttpHeaders.ContentType)
+        header(HttpHeaders.AcceptLanguage)
         header("facebookToken")
         header("facebookId")
         exposeHeader(HttpHeaders.Authorization)

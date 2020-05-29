@@ -34,6 +34,8 @@ class RouteConfiguration<T: Any> {
 
     var mongoQueriesDisabled = false
 
+    var defaultLanguage = "en"
+
     fun authorizations(closure: Authorization.() -> Unit) {
         val authorization = Authorization()
         authorization.closure()
