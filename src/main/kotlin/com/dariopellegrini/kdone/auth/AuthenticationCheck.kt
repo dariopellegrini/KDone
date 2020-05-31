@@ -32,3 +32,10 @@ fun checkPermission(userAuth: UserAuth?, authorization: Authorization?, authEnum
     }
     return false
 }
+
+fun can(authorization: Authorization?, userAuth: UserAuth?, authEnum: AuthEnum): Boolean {
+    if (authorization == null) return true
+    if (userAuth == null) return authorization.guest.contains(authEnum)
+    if (userAuth.role == null) return authorization.registered.contains(authEnum)
+    return authorization.roles[userAuth.role]?.contains(authEnum) == true
+}

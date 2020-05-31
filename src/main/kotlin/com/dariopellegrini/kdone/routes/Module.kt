@@ -5,6 +5,7 @@ import auth.userAuth
 import auth.userAuthOrNull
 import com.dariopellegrini.kdone.application.database
 import com.dariopellegrini.kdone.auth.AuthEnum
+import com.dariopellegrini.kdone.auth.can
 import com.dariopellegrini.kdone.auth.checkPermission
 import com.dariopellegrini.kdone.auth.checkToken
 import com.dariopellegrini.kdone.constants.limitParameter
@@ -19,6 +20,7 @@ import com.dariopellegrini.kdone.model.DateModel
 import com.dariopellegrini.kdone.model.Identifiable
 import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.languages.localize
+import com.dariopellegrini.kdone.model.OptionsEndpoint
 import com.dariopellegrini.kdone.mongo.MongoRepository
 import io.ktor.application.call
 import io.ktor.auth.authenticate
@@ -40,6 +42,7 @@ import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.jvmErasure
 
 inline fun <reified T : Any>Route.module(endpoint: String,
@@ -354,6 +357,54 @@ inline fun <reified T : Any>Route.module(endpoint: String,
             } catch (e: Exception) {
                 call.respondWithException(e)
                 configuration.exceptionHandler?.invoke(call, e)
+            }
+        }
+
+        options(endpoint) {
+            try {
+                call.checkToken(this@authenticate.database)
+
+                val optionsResponse = mutableListOf<OptionsEndpoint>()
+                val authorization = configuration.authorization
+                val parameters = mutableListOf<OptionsEndpoint.OptionsParameter>()
+                val optionalParameters = mutableListOf<OptionsEndpoint.OptionsParameter>()
+                val klass = T::class
+                klass.memberProperties.forEach {
+                    if (it.name != "_id" && it.name != "owner" && it.name != "dateCreated" && it.name != "dateUpdated") {
+                        parameters.add(
+                            OptionsEndpoint.OptionsParameter(
+                                it.name,
+                                it.returnType.toString().split(".").last(),
+                                it.returnType.isMarkedNullable
+                            )
+                        )
+                        optionalParameters.add(
+                            OptionsEndpoint.OptionsParameter(
+                                it.name,
+                                it.returnType.toString().split(".").last(),
+                                false
+                            )
+                        )
+                    }
+                }
+
+                if (can(authorization, call.userAuthOrNull, AuthEnum.CREATE)) {
+                    optionsResponse.add(OptionsEndpoint(endpoint, "POST", parameters))
+                }
+                if (can(authorization, call.userAuthOrNull, AuthEnum.READ)) {
+                    optionsResponse.add(OptionsEndpoint(endpoint, "GET", optionalParameters))
+                    optionsResponse.add(OptionsEndpoint("$endpoint/:id", "GET", null))
+                }
+                if (can(authorization, call.userAuthOrNull, AuthEnum.UPDATE)) {
+                    optionsResponse.add(OptionsEndpoint("$endpoint/:id", "PATCH", optionalParameters))
+                }
+                if (can(authorization, call.userAuthOrNull, AuthEnum.DELETE)) {
+                    optionsResponse.add(OptionsEndpoint("$endpoint/:id", "DELETE", null))
+                }
+
+                call.respond(HttpStatusCode.OK, optionsResponse)
+            } catch (e: Exception) {
+                call.respondWithException(e)
             }
         }
     }
