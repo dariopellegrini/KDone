@@ -40,3 +40,11 @@ val String.dateOrNull: Date?
     }
 
 val String.normalizeURL get() = URI(this).normalize().toString()
+
+fun String.cleanClassName(): String {
+    if (this.contains("<") && this.contains(">")) {
+        val between = this.substringAfter("<").substringBefore(">")
+        return "${this.substringBefore("<").split(".").last()}<${between.cleanClassName()}>${this.substringAfter(">")}"
+    }
+    return this.split(".").last()
+}

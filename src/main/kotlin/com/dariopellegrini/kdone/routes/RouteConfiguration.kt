@@ -36,6 +36,8 @@ class RouteConfiguration<T: Any> {
 
     var defaultLanguage = "en"
 
+    var optionsEnabled = false
+
     fun authorizations(closure: Authorization.() -> Unit) {
         val authorization = Authorization()
         authorization.closure()

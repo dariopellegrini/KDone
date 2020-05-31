@@ -360,51 +360,52 @@ inline fun <reified T : Any>Route.module(endpoint: String,
             }
         }
 
-        options(endpoint) {
-            try {
-                call.checkToken(this@authenticate.database)
-
-                val optionsResponse = mutableListOf<OptionsEndpoint>()
-                val authorization = configuration.authorization
-                val parameters = mutableListOf<OptionsEndpoint.OptionsParameter>()
-                val optionalParameters = mutableListOf<OptionsEndpoint.OptionsParameter>()
-                val klass = T::class
-                klass.memberProperties.forEach {
-                    if (it.name != "_id" && it.name != "owner" && it.name != "dateCreated" && it.name != "dateUpdated") {
-                        parameters.add(
-                            OptionsEndpoint.OptionsParameter(
-                                it.name,
-                                it.returnType.toString().split(".").last(),
-                                it.returnType.isMarkedNullable
+        if (configuration.optionsEnabled) {
+            options(endpoint) {
+                try {
+                    call.checkToken(this@authenticate.database)
+                    val optionsResponse = mutableListOf<OptionsEndpoint>()
+                    val authorization = configuration.authorization
+                    val parameters = mutableListOf<OptionsEndpoint.OptionsParameter>()
+                    val optionalParameters = mutableListOf<OptionsEndpoint.OptionsParameter>()
+                    val klass = T::class
+                    klass.memberProperties.forEach {
+                        if (it.name != "_id" && it.name != "owner" && it.name != "dateCreated" && it.name != "dateUpdated") {
+                            parameters.add(
+                                OptionsEndpoint.OptionsParameter(
+                                    it.name,
+                                    it.returnType.toString().cleanClassName(),
+                                    it.returnType.isMarkedNullable
+                                )
                             )
-                        )
-                        optionalParameters.add(
-                            OptionsEndpoint.OptionsParameter(
-                                it.name,
-                                it.returnType.toString().split(".").last(),
-                                false
+                            optionalParameters.add(
+                                OptionsEndpoint.OptionsParameter(
+                                    it.name,
+                                    it.returnType.toString().cleanClassName(),
+                                    false
+                                )
                             )
-                        )
+                        }
                     }
-                }
 
-                if (can(authorization, call.userAuthOrNull, AuthEnum.CREATE)) {
-                    optionsResponse.add(OptionsEndpoint(endpoint, "POST", parameters))
-                }
-                if (can(authorization, call.userAuthOrNull, AuthEnum.READ)) {
-                    optionsResponse.add(OptionsEndpoint(endpoint, "GET", optionalParameters))
-                    optionsResponse.add(OptionsEndpoint("$endpoint/:id", "GET", null))
-                }
-                if (can(authorization, call.userAuthOrNull, AuthEnum.UPDATE)) {
-                    optionsResponse.add(OptionsEndpoint("$endpoint/:id", "PATCH", optionalParameters))
-                }
-                if (can(authorization, call.userAuthOrNull, AuthEnum.DELETE)) {
-                    optionsResponse.add(OptionsEndpoint("$endpoint/:id", "DELETE", null))
-                }
+                    if (can(authorization, call.userAuthOrNull, AuthEnum.CREATE)) {
+                        optionsResponse.add(OptionsEndpoint(endpoint, "POST", parameters))
+                    }
+                    if (can(authorization, call.userAuthOrNull, AuthEnum.READ)) {
+                        optionsResponse.add(OptionsEndpoint(endpoint, "GET", optionalParameters))
+                        optionsResponse.add(OptionsEndpoint("$endpoint/:id", "GET", null))
+                    }
+                    if (can(authorization, call.userAuthOrNull, AuthEnum.UPDATE)) {
+                        optionsResponse.add(OptionsEndpoint("$endpoint/:id", "PATCH", optionalParameters))
+                    }
+                    if (can(authorization, call.userAuthOrNull, AuthEnum.DELETE)) {
+                        optionsResponse.add(OptionsEndpoint("$endpoint/:id", "DELETE", null))
+                    }
 
-                call.respond(HttpStatusCode.OK, optionsResponse)
-            } catch (e: Exception) {
-                call.respondWithException(e)
+                    call.respond(HttpStatusCode.OK, optionsResponse)
+                } catch (e: Exception) {
+                    call.respondWithException(e)
+                }
             }
         }
     }
