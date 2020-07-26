@@ -18,7 +18,8 @@ fun Any.localize(countryCode: String, defaultCountryCode: String): Map<String, A
         if (member.returnType.jvmErasure.isSubclassOf(Localized::class)) {
             val local = ((member as? KProperty1<Any, *>)?.get(this) as? Localized<*>)
             values[member.name] = local?.localize(countryCode) ?: local?.localize(defaultCountryCode) ?:
-                    (member as KProperty1<Any, *>).get(this)
+                    if (local?.keys?.firstOrNull() != null) local.localize(local.keys.first()) else
+                    null
         } else {
             values[member.name] = (member as KProperty1<Any, *>).get(this)
         }

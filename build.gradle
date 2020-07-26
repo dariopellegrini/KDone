@@ -1,7 +1,7 @@
 buildscript {
     ext.kotlin_version = '1.3.71'
-    ext.ktor_version = '1.3.0'
-    ext.kmongo_version = '4.0.0'
+    ext.ktor_version = '1.3.2'
+    ext.kmongo_version = '4.0.1'
 
 }
 
@@ -33,7 +33,7 @@ dependencies {
     api "io.ktor:ktor-jackson:$ktor_version"
 
     // KotlinX Coroutines
-    api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2'
+    api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7'
 
     // MongoDB
     api "org.litote.kmongo:kmongo:$kmongo_version"
