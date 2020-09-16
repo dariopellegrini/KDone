@@ -17,6 +17,7 @@ import com.dariopellegrini.kdone.extensions.*
 import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.dariopellegrini.kdone.passwordrecovery.model.PasswordRecovery
+import com.dariopellegrini.kdone.privacy.privacyModule
 import com.dariopellegrini.kdone.user.model.*
 import com.dariopellegrini.kdone.user.otp.otpModule
 import com.dariopellegrini.kdone.user.social.apple.apple
@@ -650,8 +651,13 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
     }
 
     // OTP
-    if (configuration.otpEnabled == true) {
+    if (configuration.otpEnabled) {
         otpModule(endpoint, repository, tokenRepository, jwtConfig, configuration)
+    }
+
+    // Privacy
+    configuration.privacyParagraphs?.let {
+        privacyModule(it)
     }
 }
 

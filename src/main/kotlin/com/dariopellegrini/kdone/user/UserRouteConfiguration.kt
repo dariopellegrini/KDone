@@ -5,6 +5,7 @@ import com.dariopellegrini.kdone.email.EmailConfirmationConfiguration
 import com.dariopellegrini.kdone.passwordrecovery.PasswordRecoveryConfiguration
 import com.dariopellegrini.kdone.email.EmailClient
 import com.dariopellegrini.kdone.email.model.EmailMessage
+import com.dariopellegrini.kdone.privacy.model.PrivacyParagraph
 import com.dariopellegrini.kdone.sender.UserSender
 import com.dariopellegrini.kdone.uploader.S3Uploader
 import com.dariopellegrini.kdone.uploader.Uploader
@@ -62,6 +63,9 @@ open class UserRouteConfiguration<T: KDoneUser> {
     var otpEnabled = false
     var otpSenders: List<UserSender<T>>? = null
     var otpCodeGenerator: (() -> String)? = null
+
+    // Privacy
+    var privacyParagraphs: List<PrivacyParagraph>? = null
 
     fun authorizations(closure: UserAuthorization.() -> Unit) {
         authorization.closure()
@@ -170,5 +174,9 @@ open class UserRouteConfiguration<T: KDoneUser> {
         otpEnabled = true
         otpSenders = senders.toList()
         otpCodeGenerator = codeGenerator
+    }
+
+    fun privacy(vararg paragraphs: PrivacyParagraph) {
+        this.privacyParagraphs = paragraphs.toList()
     }
 }

@@ -115,6 +115,9 @@ suspend fun ApplicationCall.respondWithException(e: Exception) {
         is MongoWriteException -> respond(
             HttpStatusCode(HttpStatusCode.BadRequest.value, "Bad request"),
             mapOf("error" to e.localizedMessage))
+        is MissingPrivacyException -> respond(
+            HttpStatusCode(423, e.localizedMessage),
+            mapOf("error" to e.localizedMessage))
         else -> respond(
             HttpStatusCode.InternalServerError,
             mapOf("error" to e.localizedMessage, "type" to "Generic error", "exception" to e.toString()))
