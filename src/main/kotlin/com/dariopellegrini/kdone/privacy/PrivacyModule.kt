@@ -32,7 +32,7 @@ fun Route.privacyModule(paragraphs: List<PrivacyParagraph>) {
             }
         }
 
-        post("user/privacy") {
+        post("privacy/me") {
             try {
                 val userId = call.userAuth.userId
                 val input = call.receive<PrivacyPreferencesInput>()
@@ -68,7 +68,7 @@ fun Route.privacyModule(paragraphs: List<PrivacyParagraph>) {
             }
         }
 
-        get("user/privacy/filled") {
+        get("privacy/filled/me") {
             try {
                 val userId = call.userAuth.userId
                 val count = repository.count(UserPrivacy::userId eq userId.mongoId())
@@ -79,7 +79,7 @@ fun Route.privacyModule(paragraphs: List<PrivacyParagraph>) {
             }
         }
 
-        get("user/privacy") {
+        get("privacy/me") {
             try {
                 val userId = call.userAuth.userId
                 val userPrivacy = repository.findOneOrNull(UserPrivacy::userId eq userId.mongoId()) ?: throw NotFoundException("Privacy not found for this user")
@@ -93,7 +93,7 @@ fun Route.privacyModule(paragraphs: List<PrivacyParagraph>) {
             }
         }
 
-        patch("user/privacy") {
+        patch("privacy/me") {
             try {
                 val userId = call.userAuth.userId
                 val input = call.receive<PrivacyPreferencesInput>()
