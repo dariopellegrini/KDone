@@ -18,9 +18,12 @@ import org.json.simple.JSONObject
 import org.litote.kmongo.Id
 import java.io.IOException
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.reflect.KClass
+import kotlin.reflect.full.createType
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.jvmErasure
 
 suspend inline fun <reified T: Any>ApplicationCall.receiveMap(): Map<String, Any> {
@@ -41,6 +44,9 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMap(): Map<String, Any
             entry.value is Map<*, *> -> {
                 val element = ObjectMapper().configureForKDone().convertValue(entry.value, property.returnType.jvmErasure.java)
                 resultMap[key] = element
+            }
+            propertiesMap[key]?.javaField?.type == List::class.java && value is ArrayList<*> -> {
+                resultMap[key] = value.toList()
             }
             property.returnType.jvmErasure.isSubclassOf(Id::class) && value is String && ObjectId.isValid(value) -> resultMap[key] = value.mongoId<Any>()
             property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
