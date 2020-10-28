@@ -78,7 +78,6 @@ Other functionalities:
 - Permissions for users and models
 - Roles
 - Support for Apple, Google and Facebook authentications
-- Password recovery
 - One-time password
 - Queries
 - Geographic coordinates
