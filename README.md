@@ -76,13 +76,20 @@ This configuration will also open these endpoints for User model:
 
 Other functionalities:
 - Permissions for users and models
+- Roles
 - Support for Apple, Google and Facebook authentications
+- Password recovery
+- One-time password
 - Queries
 - Geographic coordinates
 - Routes actions
+- DTO
 - File uploads
 - S3 storage support
 - Easily extensible with custom routes
+
+### Wiki
+See [Wiki page](https://github.com/dariopellegrini/KDone/wiki) for more details.
 
 ## Author
 
