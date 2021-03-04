@@ -87,8 +87,8 @@ Other functionalities:
 - S3 storage support
 - Easily extensible with custom routes
 
-### Wiki
-See [Wiki page](https://github.com/dariopellegrini/KDone/wiki) for more details.
+### Documentation
+See [KDone website](https://dariopellegrini.github.io/kdone-website) or [Wiki page](https://github.com/dariopellegrini/KDone/wiki) for more details.
 
 ## Author
 
