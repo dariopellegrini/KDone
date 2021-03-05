@@ -22,6 +22,7 @@ import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.languages.localize
 import com.dariopellegrini.kdone.model.OptionsEndpoint
 import com.dariopellegrini.kdone.mongo.MongoRepository
+import com.dariopellegrini.kdone.websockets.WebSocketController
 import io.ktor.application.call
 import io.ktor.auth.authenticate
 import io.ktor.http.HttpStatusCode
@@ -55,6 +56,14 @@ inline fun <reified T : Any>Route.module(endpoint: String,
 
     T::class.java.geoIndexJson?.forEach {
         repository.createIndex(it)
+    }
+
+    val webSocketController = if (configuration.webSocketActive == true) {
+        WebSocketController<T>(repository, endpoint, configuration.authorization).apply {
+            configure(this@module)
+        }
+    } else {
+        null
     }
     
     authenticate("jwt", optional = true) {
@@ -236,6 +245,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 }
 
                 configuration.afterCreate?.let { it(call, element) }
+                webSocketController?.update(element, call.userAuthOrNull)
             } catch (e: Exception) {
                 call.respondWithException(e)
                 configuration.exceptionHandler?.invoke(call, e)
@@ -305,6 +315,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 configuration.afterUpdate?.let {
                     it(call, patch, updatedElement)
                 }
+                webSocketController?.update(updatedElement, call.userAuthOrNull)
             } catch (e: Exception) {
                 call.respondWithException(e)
                 configuration.exceptionHandler?.invoke(call, e)

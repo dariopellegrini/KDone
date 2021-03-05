@@ -38,6 +38,8 @@ class RouteConfiguration<T: Any> {
 
     var optionsEnabled = false
 
+    var webSocketActive = false
+
     fun authorizations(closure: Authorization.() -> Unit) {
         val authorization = Authorization()
         authorization.closure()

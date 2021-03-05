@@ -18,6 +18,7 @@ import io.ktor.jackson.jackson
 import io.ktor.routing.Route
 import io.ktor.routing.Routing
 import io.ktor.routing.routing
+import io.ktor.websocket.*
 import org.bson.Document
 import org.litote.kmongo.KMongo
 
@@ -63,6 +64,7 @@ fun Application.installKDone(mongoDatabase: MongoDatabase,
             }
         }
     }
+    install(WebSockets)
 
     routing {
         mongo = mongoDatabase

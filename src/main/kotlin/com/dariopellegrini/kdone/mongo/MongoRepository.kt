@@ -4,6 +4,7 @@ import com.dariopellegrini.kdone.exceptions.NotFoundException
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.IndexModel
 import com.mongodb.client.model.UpdateOptions
+import com.mongodb.client.model.changestream.FullDocument
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import kotlinx.coroutines.Dispatchers

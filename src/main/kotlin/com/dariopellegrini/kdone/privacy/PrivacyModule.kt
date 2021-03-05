@@ -40,6 +40,12 @@ fun Route.privacyModule(paragraphs: List<PrivacyParagraph>) {
                 if (repository.count(UserPrivacy::userId eq userId.mongoId()) > 0)
                     throw BadRequestException("Privacy already sent for this user")
 
+                val paragraphsKeys = paragraphs.map { it.key }
+                val inputKeys = input.preferences.map { it.key }
+                inputKeys.forEach {
+                    if (!paragraphsKeys.contains(it)) throw BadRequestException("Key $it is not a paragraph key")
+                }
+
                 val userPreferences = mutableListOf<UserPrivacyPreference>()
 
                 paragraphs.forEach { paragraph ->
@@ -68,7 +74,7 @@ fun Route.privacyModule(paragraphs: List<PrivacyParagraph>) {
             }
         }
 
-        get("privacy/filled/me") {
+        get("privacy/me/filled") {
             try {
                 val userId = call.userAuth.userId
                 val count = repository.count(UserPrivacy::userId eq userId.mongoId())
