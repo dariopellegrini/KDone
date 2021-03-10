@@ -1,7 +1,5 @@
 package com.dariopellegrini.kdone.auth
 
-import com.sun.org.apache.xpath.internal.operations.Bool
-
 class UserAuthorization {
     private var userAuthorizationContent: UserAuthorizationContent? = null
 
