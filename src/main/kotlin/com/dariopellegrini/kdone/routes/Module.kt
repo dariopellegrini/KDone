@@ -3,12 +3,14 @@ package com.dariopellegrini.kdone.routes
 import auth.mongoId
 import auth.userAuth
 import auth.userAuthOrNull
+import com.dariopellegrini.kdone.annotations.Lookup
 import com.dariopellegrini.kdone.application.database
 import com.dariopellegrini.kdone.auth.AuthEnum
 import com.dariopellegrini.kdone.auth.can
 import com.dariopellegrini.kdone.auth.checkPermission
 import com.dariopellegrini.kdone.auth.checkToken
 import com.dariopellegrini.kdone.constants.limitParameter
+import com.dariopellegrini.kdone.constants.lookupParameter
 import com.dariopellegrini.kdone.constants.queryParameter
 import com.dariopellegrini.kdone.constants.skipParameter
 import com.dariopellegrini.kdone.dto.transferAny
@@ -34,10 +36,9 @@ import io.ktor.routing.*
 import io.ktor.util.toMap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import org.bson.conversions.Bson
 import org.bson.types.ObjectId
-import org.litote.kmongo.and
-import org.litote.kmongo.eq
-import org.litote.kmongo.json
+import org.litote.kmongo.*
 import org.litote.kmongo.util.KMongoUtil
 import java.util.*
 import kotlin.reflect.KClass
@@ -45,6 +46,7 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.jvmErasure
+import kotlin.reflect.jvm.kotlinProperty
 
 inline fun <reified T : Any>Route.module(endpoint: String,
                                          collectionName: String? = null,
@@ -80,7 +82,11 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 // Filters
                 val queryMap = mutableMapOf<String, Any>()
                 call.request.queryParameters.toMap()
-                    .filter { it.key != queryParameter && it.key != limitParameter  && it.key != skipParameter }
+                    .filter { it.key != queryParameter &&
+                            it.key != limitParameter &&
+                            it.key != skipParameter &&
+                            it.key != lookupParameter
+                    }
                     .map { it.key to it.value.first() }.map { pair ->
                         when {
                             ObjectId.isValid(pair.second) -> queryMap[pair.first] = ObjectId(pair.second)
@@ -105,10 +111,41 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 val limit = call.parameters[limitParameter]?.toIntOrNull()
                 val skip = call.parameters[skipParameter]?.toIntOrNull()
 
-                val elements = if (shouldCheckOwner) repository.findAll(and(
-                    Identifiable::owner eq call.userAuth.userId.mongoId(),
-                    KMongoUtil.toBson(query)), limit, skip)
-                else repository.findAll(query, limit = limit, skip = skip)
+                val elements = when {
+                    call.request.queryParameters[lookupParameter] == "true" -> {
+                        val aggregateList = mutableListOf<Bson>()
+                        aggregateList += if (shouldCheckOwner)
+                            match(and(
+                                Identifiable::owner eq call.userAuth.userId.mongoId(),
+                                KMongoUtil.toBson(query)
+                            ))
+                        else match(KMongoUtil.toBson(query))
+                        if (skip != null) {
+                            aggregateList += skip(skip)
+                        }
+                        if (limit != null) {
+                            aggregateList += limit(limit)
+                        }
+                        T::class.java.declaredFields.forEach { field ->
+                            field.isAccessible = true
+                            if (field.isAnnotationPresent(Lookup::class.java)) {
+                                val annotation = field.getAnnotation(Lookup::class.java)
+                                aggregateList += lookup(annotation.collectionName, annotation.parameter, "_id", field.name)
+                                val classifier = field.kotlinProperty?.returnType?.classifier
+                                if (classifier != List::class &&
+                                    classifier != Array::class &&
+                                    classifier != Set::class) {
+                                    aggregateList += unwind("\$${field.name}")
+                                }
+                            }
+                        }
+                        repository.aggregateBsonList(aggregateList)
+                    }
+                    shouldCheckOwner -> repository.findAll(and(
+                        Identifiable::owner eq call.userAuth.userId.mongoId(),
+                        KMongoUtil.toBson(query)), limit, skip)
+                    else -> repository.findAll(query, limit = limit, skip = skip)
+                }
 
                 val responseElements = if (configuration.dtoConfiguration != null) {
                     val dtoElements = elements.map {

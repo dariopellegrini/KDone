@@ -132,6 +132,10 @@ class MongoRepository<T>(private val database: MongoDatabase,
         collection.aggregate(bson.toList(), classType).toList()
     }
 
+    suspend fun aggregateBsonList(bsonList: List<Bson>): List<T> = withContext(Dispatchers.IO) {
+        collection.aggregate(bsonList, classType).toList()
+    }
+
     suspend fun count(): Long = withContext(Dispatchers.IO) {
         collection.countDocuments()
     }

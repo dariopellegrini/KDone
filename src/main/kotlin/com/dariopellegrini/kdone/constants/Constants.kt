@@ -8,4 +8,5 @@ const val queryParameter = "_query"
 const val sortParameter = "_sort"
 const val limitParameter = "_limit"
 const val skipParameter = "_skip"
+const val lookupParameter = "_lookup"
 val forbiddenUserParameters = listOf("confirmed", "facebookId", "appleId", "googleId", "otp")
