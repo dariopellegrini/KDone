@@ -40,6 +40,8 @@ class RouteConfiguration<T: Any> {
 
     var webSocketActive = false
 
+    var autolookup = false
+
     fun authorizations(closure: Authorization.() -> Unit) {
         val authorization = Authorization()
         authorization.closure()

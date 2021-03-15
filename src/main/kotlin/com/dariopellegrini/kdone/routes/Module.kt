@@ -16,6 +16,7 @@ import com.dariopellegrini.kdone.constants.skipParameter
 import com.dariopellegrini.kdone.dto.transferAny
 import com.dariopellegrini.kdone.exceptions.BadRequestException
 import com.dariopellegrini.kdone.exceptions.ForbiddenException
+import com.dariopellegrini.kdone.exceptions.NotFoundException
 import com.dariopellegrini.kdone.exceptions.ServerException
 import com.dariopellegrini.kdone.extensions.*
 import com.dariopellegrini.kdone.model.DateModel
@@ -112,7 +113,8 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 val skip = call.parameters[skipParameter]?.toIntOrNull()
 
                 val elements = when {
-                    call.request.queryParameters[lookupParameter] == "true" -> {
+                    configuration.autolookup ||
+                            call.request.queryParameters[lookupParameter] == "true" -> {
                         val aggregateList = mutableListOf<Bson>()
                         aggregateList += if (shouldCheckOwner)
                             match(and(
@@ -186,7 +188,35 @@ inline fun <reified T : Any>Route.module(endpoint: String,
 
                 val id = call.parameters["id"] ?: throw BadRequestException("Missing id")
 
-                val element = repository.findById(id.mongoId())
+                val element = when {
+                    configuration.autolookup ||
+                            call.request.queryParameters[lookupParameter] == "true" -> {
+                        val aggregateList = mutableListOf<Bson>()
+                        aggregateList += match(Identifiable::_id eq id.mongoId())
+                        T::class.java.declaredFields.forEach { field ->
+                            field.isAccessible = true
+                            if (field.isAnnotationPresent(Lookup::class.java)) {
+                                val annotation = field.getAnnotation(Lookup::class.java)
+                                aggregateList += lookup(
+                                    annotation.collectionName,
+                                    annotation.parameter,
+                                    "_id",
+                                    field.name
+                                )
+                                val classifier = field.kotlinProperty?.returnType?.classifier
+                                if (classifier != List::class &&
+                                    classifier != Array::class &&
+                                    classifier != Set::class
+                                ) {
+                                    aggregateList += unwind("\$${field.name}")
+                                }
+                            }
+                        }
+                        repository.aggregateBsonList(aggregateList).firstOrNull()
+                            ?: throw NotFoundException("Element with _id $id not found")
+                    }
+                    else -> repository.findById(id.mongoId())
+                }
                 if (shouldCheckOwner) {
                     (element as? Identifiable)?.let {
                         if (it.owner.toString() != call.userAuth.userId) throw ForbiddenException()
