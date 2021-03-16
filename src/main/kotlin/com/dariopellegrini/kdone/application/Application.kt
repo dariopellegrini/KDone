@@ -6,10 +6,11 @@ import com.dariopellegrini.kdone.delegates.Delegate
 import com.dariopellegrini.kdone.exceptions.MisconfigurationException
 import com.dariopellegrini.kdone.extensions.configureForKDone
 import com.dariopellegrini.kdone.mongo.MongoRepository
+import com.dariopellegrini.kdone.mongo.MongoShared
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import io.ktor.application.*
-import io.ktor.auth.Authentication
+import io.ktor.auth.*
 import io.ktor.auth.jwt.jwt
 import io.ktor.features.*
 import io.ktor.http.HttpHeaders
@@ -66,6 +67,8 @@ fun Application.installKDone(mongoDatabase: MongoDatabase,
     }
     install(WebSockets)
 
+    MongoShared.mongoDatabase = mongoDatabase
+
     routing {
         mongo = mongoDatabase
         jwtConfigDelegate = jwtConfig
@@ -74,19 +77,21 @@ fun Application.installKDone(mongoDatabase: MongoDatabase,
     }
 }
 
+inline fun <reified T>mongoRepository(collectionName: String): MongoRepository<T> {
+    return MongoRepository(MongoShared.mongoDatabase, collectionName, T::class.java)
+}
+
+fun mongoCollection(collectionName: String): MongoCollection<Document> {
+    return MongoShared.mongoDatabase.getCollection(collectionName)
+}
+
 var Route.mongo: MongoDatabase? by Delegate(null)
 val Route.database: MongoDatabase get() = mongo ?: throw MisconfigurationException("Missing mongo db")
-
-inline fun <reified T>Route.mongoRepository(collectionName: String): MongoRepository<T> {
-    return MongoRepository(database, collectionName, T::class.java)
-}
-
-fun Route.mongoCollection(collectionName: String): MongoCollection<Document> {
-    return mongo!!.getCollection(collectionName)
-}
-
 var Route.jwtConfigDelegate: JWTConfig? by Delegate(null)
 val Route.jwtConfiguration: JWTConfig get() = jwtConfigDelegate ?: throw MisconfigurationException("Missing mongo db")
+
+fun Route.authenticateJWT(optional: Boolean = false,
+                          build: Route.() -> Unit) = authenticate("jwt", optional = optional, build = build)
 
 fun Application.installKDone(mongoURL: String, jwtConfig: JWTConfig, configureRoutes: Routing.() -> Unit) {
     installKDone(KMongo.createClient(mongoURL.substring(0, mongoURL.lastIndexOf("/")))

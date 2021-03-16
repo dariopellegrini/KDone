@@ -56,6 +56,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
     val configuration = RouteConfiguration<T>()
     configuration.configure()
     val repository = MongoRepository(database, collectionName ?: endpoint, T::class.java)
+    configuration.repository = repository
 
     T::class.java.geoIndexJson?.forEach {
         repository.createIndex(it)

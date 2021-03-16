@@ -1,8 +1,10 @@
 package com.dariopellegrini.kdone.routes
 
+import com.dariopellegrini.kdone.application.database
 import com.dariopellegrini.kdone.auth.Authorization
 import com.dariopellegrini.kdone.dto.DTOConfiguration
 import com.dariopellegrini.kdone.interfaces.RouteActions
+import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.dariopellegrini.kdone.uploader.S3Uploader
 import com.dariopellegrini.kdone.uploader.Uploader
 import com.mongodb.client.result.DeleteResult
@@ -98,4 +100,6 @@ class RouteConfiguration<T: Any> {
     fun exceptionHandler(closure: (ApplicationCall, Exception) -> Unit) {
         exceptionHandler = closure
     }
+
+    lateinit var repository: MongoRepository<T>
 }

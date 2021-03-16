@@ -1,5 +1,6 @@
 package com.dariopellegrini.kdone.mongo
 
+import auth.mongoId
 import com.dariopellegrini.kdone.exceptions.NotFoundException
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.IndexModel
@@ -49,7 +50,7 @@ class MongoRepository<T>(private val database: MongoDatabase,
     }
 
     suspend fun findById(id: String): T = withContext(Dispatchers.IO) {
-        collection.findOneById(id) ?: throw NotFoundException()
+        collection.findOneById(id.mongoId<T>()) ?: throw NotFoundException()
     }
 
     suspend fun findById(id: Id<T>): T = withContext(Dispatchers.IO) {
