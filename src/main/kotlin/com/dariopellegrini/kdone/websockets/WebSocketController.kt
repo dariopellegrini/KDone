@@ -24,34 +24,38 @@ class WebSocketController<T: Any>(
     fun configure(route: Route) {
         route.authenticate("jwt", optional = true) {
             webSocket(endpoint) { // this: DefaultWebSocketSession
-                val userAuth = call.userAuthOrNull
-                call.checkToken(this@authenticate.database)
-                val authEnum = AuthEnum.READ
-                val authorized = if (authorization != null) {
-                    authorization.guest.contains(authEnum) ||
-                            userAuth != null && authorization.registered.contains(authEnum) ||
-                            userAuth?.role != null && authorization.roles[userAuth.role]?.contains(authEnum) == true
-                } else {
-                    true
-                }
-                if (!authorized) throw NotAuthorizedException()
-
-                sessions += UserWebSocketSession(this, userAuth)
-                val elements = repository.findAll()
-                this.outgoing.send(Frame.Text(elements.json))
                 try {
-                    while (true) {
-                        when (val frame = incoming.receive()) {
-                            is Frame.Text -> {
+                    val userAuth = call.userAuthOrNull
+                    call.checkToken(this@authenticate.database)
+                    val authEnum = AuthEnum.READ
+                    val authorized = if (authorization != null) {
+                        authorization.guest.contains(authEnum) ||
+                                userAuth != null && authorization.registered.contains(authEnum) ||
+                                userAuth?.role != null && authorization.roles[userAuth.role]?.contains(authEnum) == true
+                    } else {
+                        true
+                    }
+                    if (!authorized) throw NotAuthorizedException()
+
+                    sessions += UserWebSocketSession(this, userAuth)
+                    val elements = repository.findAll()
+                    this.outgoing.send(Frame.Text(elements.json))
+                    try {
+                        while (true) {
+                            when (val frame = incoming.receive()) {
+                                is Frame.Text -> {
 //                            val text = frame.readText()
 //                            for (session in sessions) {
 //                                session.connection.outgoing.send(Frame.Text(text))
 //                            }
+                                }
                             }
                         }
+                    } finally {
+                        sessions.removeIf { it.connection == this }
                     }
-                } finally {
-                    sessions.removeIf { it.connection == this }
+                } catch (e: Exception) {
+                    this.outgoing.send(Frame.Text(mapOf("error" to e.localizedMessage).json))
                 }
             }
         }
