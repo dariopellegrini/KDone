@@ -5,6 +5,7 @@ import com.dariopellegrini.kdone.email.EmailConfirmationConfiguration
 import com.dariopellegrini.kdone.passwordrecovery.PasswordRecoveryConfiguration
 import com.dariopellegrini.kdone.email.EmailClient
 import com.dariopellegrini.kdone.email.model.EmailMessage
+import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.dariopellegrini.kdone.privacy.model.PrivacyParagraph
 import com.dariopellegrini.kdone.sender.UserSender
 import com.dariopellegrini.kdone.uploader.S3Uploader
@@ -66,6 +67,8 @@ open class UserRouteConfiguration<T: KDoneUser> {
 
     // Privacy
     var privacyParagraphs: List<PrivacyParagraph>? = null
+
+    lateinit var repository: MongoRepository<T>
 
     fun authorizations(closure: UserAuthorization.() -> Unit) {
         authorization.closure()

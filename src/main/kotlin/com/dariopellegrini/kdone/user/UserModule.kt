@@ -58,6 +58,8 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
     val repository = MongoRepository(database, collectionName ?: endpoint, T::class.java)
 
+    configuration.repository = repository
+
     // users_token should be reserved
     val tokenRepository = MongoRepository(database, usersTokensCollection, UserToken::class.java)
     val emailConfirmationRepository = MongoRepository(database, usersConfirmationsCollection, UserConfirmation::class.java)
