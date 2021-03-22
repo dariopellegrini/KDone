@@ -6,7 +6,6 @@ import com.dariopellegrini.kdone.delegates.Delegate
 import com.dariopellegrini.kdone.exceptions.MisconfigurationException
 import com.dariopellegrini.kdone.extensions.configureForKDone
 import com.dariopellegrini.kdone.mongo.MongoRepository
-import com.dariopellegrini.kdone.mongo.MongoShared
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import io.ktor.application.*
@@ -67,8 +66,6 @@ fun Application.installKDone(mongoDatabase: MongoDatabase,
     }
     install(WebSockets)
 
-    MongoShared.mongoDatabase = mongoDatabase
-
     routing {
         mongo = mongoDatabase
         jwtConfigDelegate = jwtConfig
@@ -77,12 +74,12 @@ fun Application.installKDone(mongoDatabase: MongoDatabase,
     }
 }
 
-inline fun <reified T>mongoRepository(collectionName: String): MongoRepository<T> {
-    return MongoRepository(MongoShared.mongoDatabase, collectionName, T::class.java)
+inline fun <reified T>Route.mongoRepository(collectionName: String): MongoRepository<T> {
+    return MongoRepository(this.database, collectionName, T::class.java)
 }
 
-fun mongoCollection(collectionName: String): MongoCollection<Document> {
-    return MongoShared.mongoDatabase.getCollection(collectionName)
+fun Route.mongoCollection(collectionName: String): MongoCollection<Document> {
+    return database.getCollection(collectionName)
 }
 
 var Route.mongo: MongoDatabase? by Delegate(null)
