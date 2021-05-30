@@ -1,7 +1,7 @@
 buildscript {
-    ext.kotlin_version = '1.4.31'
-    ext.ktor_version = '1.5.2'
-    ext.kmongo_version = '4.2.4'
+    ext.kotlin_version = '1.5.0'
+    ext.ktor_version = '1.6.0'
+    ext.kmongo_version = '4.2.7'
 
 }
 
@@ -11,7 +11,7 @@ plugins {
 }
 
 group 'com.dariopellegrini'
-version '0.6.12'
+version '0.6.15'
 
 repositories {
     jcenter()
@@ -57,10 +57,10 @@ dependencies {
     // Client E-mail
     implementation "org.simplejavamail:simple-java-mail:6.0.0-rc2"
 }
-//
-//compileKotlin {
-//    kotlinOptions.jvmTarget = "1.8"
-//}
-//compileTestKotlin {
-//    kotlinOptions.jvmTarget = "1.8"
-//}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
