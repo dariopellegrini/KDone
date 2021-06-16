@@ -475,7 +475,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             }
         }
 
-        patch("$endpoint/profile/me/") {
+        patch("$endpoint/profile/me") {
             try {
                 val userAuth = call.userAuth
 

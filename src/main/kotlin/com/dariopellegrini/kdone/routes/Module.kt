@@ -9,10 +9,7 @@ import com.dariopellegrini.kdone.auth.AuthEnum
 import com.dariopellegrini.kdone.auth.can
 import com.dariopellegrini.kdone.auth.checkPermission
 import com.dariopellegrini.kdone.auth.checkToken
-import com.dariopellegrini.kdone.constants.limitParameter
-import com.dariopellegrini.kdone.constants.lookupParameter
-import com.dariopellegrini.kdone.constants.queryParameter
-import com.dariopellegrini.kdone.constants.skipParameter
+import com.dariopellegrini.kdone.constants.*
 import com.dariopellegrini.kdone.dto.transferAny
 import com.dariopellegrini.kdone.exceptions.BadRequestException
 import com.dariopellegrini.kdone.exceptions.ForbiddenException
@@ -87,7 +84,9 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     .filter { it.key != queryParameter &&
                             it.key != limitParameter &&
                             it.key != skipParameter &&
-                            it.key != lookupParameter
+                            it.key != lookupParameter &&
+                            it.key != sortParameter &&
+                            it.key != descendingParameter
                     }
                     .map { it.key to it.value.first() }.map { pair ->
                         when {
@@ -112,6 +111,8 @@ inline fun <reified T : Any>Route.module(endpoint: String,
 
                 val limit = call.parameters[limitParameter]?.toIntOrNull()
                 val skip = call.parameters[skipParameter]?.toIntOrNull()
+                val sortParameter = call.parameters[sortParameter]
+                val sortDescending = call.parameters[descendingParameter] != "true"
 
                 val elements = when {
                     configuration.autolookup ||
@@ -123,6 +124,13 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                                 KMongoUtil.toBson(query)
                             ))
                         else match(KMongoUtil.toBson(query))
+                        if (sortParameter != null) {
+                            aggregateList += sort(
+                                KMongoUtil.toBson("""{$sortParameter:${
+                                    if (sortDescending) -1 else 1
+                                }}""")
+                            )
+                        }
                         if (skip != null) {
                             aggregateList += skip(skip)
                         }
@@ -146,8 +154,8 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     }
                     shouldCheckOwner -> repository.findAll(and(
                         Identifiable::owner eq call.userAuth.userId.mongoId(),
-                        KMongoUtil.toBson(query)), limit, skip)
-                    else -> repository.findAll(query, limit = limit, skip = skip)
+                        KMongoUtil.toBson(query)), limit, skip, sortParameter, !sortDescending)
+                    else -> repository.findAll(query, limit = limit, skip = skip, sortParameter = sortParameter, ascending = !sortDescending)
                 }
 
                 val responseElements = if (configuration.dtoConfiguration != null) {

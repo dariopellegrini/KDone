@@ -28,24 +28,39 @@ class MongoRepository<T>(private val database: MongoDatabase,
         collection.find().toList()
     }
 
-    suspend fun findAll(bson: Bson, limit: Int? = null, skip: Int? = null): List<T> = withContext(Dispatchers.IO) {
+    suspend fun findAll(bson: Bson, limit: Int? = null, skip: Int? = null, sortParameter: String? = null, ascending: Boolean = true): List<T> = withContext(Dispatchers.IO) {
         collection.find(bson).apply {
             limit?.let { limit(it) }
             skip?.let { skip(it) }
+            sortParameter?.let {
+                sort("""{"$it":${
+                    if (ascending) 1 else -1
+                }}""")
+            }
         }.toList()
     }
 
-    suspend fun findAll(vararg bson: Bson, limit: Int? = null, skip: Int? = null): List<T> = withContext(Dispatchers.IO) {
+    suspend fun findAll(vararg bson: Bson, limit: Int? = null, skip: Int? = null, sortParameter: String? = null, ascending: Boolean = true): List<T> = withContext(Dispatchers.IO) {
         collection.find(*bson).apply {
             limit?.let { limit(it) }
             skip?.let { skip(it) }
+            sortParameter?.let {
+                sort("""{"$it":${
+                    if (ascending) 1 else -1
+                }}""")
+            }
         }.toList()
     }
 
-    suspend fun findAll(json: String, limit: Int? = null, skip: Int? = null): List<T> = withContext(Dispatchers.IO) {
+    suspend fun findAll(json: String, limit: Int? = null, skip: Int? = null, sortParameter: String? = null, ascending: Boolean = true): List<T> = withContext(Dispatchers.IO) {
         collection.find(json).apply {
             limit?.let { limit(it) }
             skip?.let { skip(it) }
+            sortParameter?.let {
+                sort("""{"$it":${
+                    if (ascending) 1 else -1
+                }}""")
+            }
         }.toList()
     }
 
