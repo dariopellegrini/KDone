@@ -23,6 +23,7 @@ import com.dariopellegrini.kdone.languages.localize
 import com.dariopellegrini.kdone.model.OptionsEndpoint
 import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.dariopellegrini.kdone.websockets.WebSocketController
+import com.mongodb.client.model.UnwindOptions
 import io.ktor.application.call
 import io.ktor.auth.authenticate
 import io.ktor.http.HttpStatusCode
@@ -146,7 +147,9 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                                 if (classifier != List::class &&
                                     classifier != Array::class &&
                                     classifier != Set::class) {
-                                    aggregateList += unwind("\$${field.name}")
+                                    val options = UnwindOptions()
+                                    options.preserveNullAndEmptyArrays(true)
+                                    aggregateList += unwind("\$${field.name}", options)
                                 }
                             }
                         }
@@ -217,7 +220,9 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                                     classifier != Array::class &&
                                     classifier != Set::class
                                 ) {
-                                    aggregateList += unwind("\$${field.name}")
+                                    val options = UnwindOptions()
+                                    options.preserveNullAndEmptyArrays(true)
+                                    aggregateList += unwind("\$${field.name}", options)
                                 }
                             }
                         }
