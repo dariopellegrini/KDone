@@ -1,5 +1,6 @@
 package com.dariopellegrini.kdone.uploader
 
+import com.amazonaws.ClientConfiguration
 import com.amazonaws.auth.AWSStaticCredentialsProvider
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.client.builder.AwsClientBuilder
@@ -28,6 +29,9 @@ open class S3Uploader(val baseFolder: String,
                 signingRegion
             )
         )
+        .withClientConfiguration(ClientConfiguration().apply {
+            signerOverride = "S3SignerType"
+        })
         .build()
 
     override suspend fun save(modelName: String, fileName: String, file: File, contentType: String): String? {

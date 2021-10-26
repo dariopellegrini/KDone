@@ -46,7 +46,15 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMap(): Map<String, Any
                 resultMap[key] = element
             }
             propertiesMap[key]?.javaField?.type == List::class.java && value is ArrayList<*> -> {
-                resultMap[key] = value.toList()
+                resultMap[key] = value.toList().map {
+                        element ->
+                    if (element is String && ObjectId.isValid(element)) {
+                        element.mongoId<Any>()
+                    } else {
+                        element
+                    }
+                }
+//                resultMap[key] = value.toList()
             }
             property.returnType.jvmErasure.isSubclassOf(Id::class) && value is String && ObjectId.isValid(value) -> resultMap[key] = value.mongoId<Any>()
             property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
@@ -157,6 +165,7 @@ suspend fun <T: Any>ApplicationCall.receiveMap(kClass: KClass<T>): Map<String, A
         val value = entry.value
         val property = propertiesMap[key] ?: throw IOException("$key not found for class $kClass")
 
+
         when {
             entry.value is Map<*, *> -> {
                 val element = ObjectMapper().configureForKDone().convertValue(entry.value, property.returnType.jvmErasure.java)
@@ -167,6 +176,14 @@ suspend fun <T: Any>ApplicationCall.receiveMap(kClass: KClass<T>): Map<String, A
                 resultMap[key] = ObjectMapper().configureForKDone().readValue(value, property.returnType.jvmErasure.java)
             }
             property.returnType.jvmErasure.isSubclassOf(Id::class) && value is String && ObjectId.isValid(value) -> resultMap[key] = value.mongoId<Any>()
+            property.returnType.jvmErasure.isSubclassOf(List::class) && value is List<*> -> resultMap[key] = value.map {
+                element ->
+                if (element is String && ObjectId.isValid(element)) {
+                    element.mongoId<Any>()
+                } else {
+                    element
+                }
+            }
             property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
             else -> throw IOException("$key is not instance of ${property.returnType}")
         }
