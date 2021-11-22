@@ -43,6 +43,10 @@ fun Application.installKDone(mongoDatabase: MongoDatabase,
         header(HttpHeaders.AcceptLanguage)
         header("facebookToken")
         header("facebookId")
+        header("appleToken")
+        header("appleId")
+        header("googleToken")
+        header("googleId")
         exposeHeader(HttpHeaders.Authorization)
         allowNonSimpleContentTypes = true
         anyHost()
@@ -59,7 +63,7 @@ fun Application.installKDone(mongoDatabase: MongoDatabase,
             verifier {
                 jwtConfig.verifier
             }
-            realm = "kdone.dariopellegrini.com"
+            realm = jwtConfig.issuer
             validate { credentials ->
                 JWTValidator().validate(credentials)
             }

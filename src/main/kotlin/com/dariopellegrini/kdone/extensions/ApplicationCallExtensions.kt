@@ -26,14 +26,14 @@ import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.jvmErasure
 
-suspend inline fun <reified T: Any>ApplicationCall.receiveMap(): Map<String, Any> {
-    val inputMap = this.receive<Map<String, Any>>()
+suspend inline fun <reified T: Any>ApplicationCall.receiveMap(): Map<String, Any?> {
+    val inputMap = this.receive<Map<String, Any?>>()
     val kClass = T::class
     val propertiesMap = kClass.declaredMemberProperties.map {
         it.name to it
     }.toMap()
 
-    val resultMap = mutableMapOf<String, Any>()
+    val resultMap = mutableMapOf<String, Any?>()
 
     inputMap.forEach { entry ->
         val key = entry.key
@@ -41,6 +41,7 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMap(): Map<String, Any
         val property = propertiesMap[key] ?: throw IOException("$key not found for class $kClass")
 
         when {
+            value == null -> resultMap[key] = null
             entry.value is Map<*, *> -> {
                 val element = ObjectMapper().configureForKDone().convertValue(entry.value, property.returnType.jvmErasure.java)
                 resultMap[key] = element
@@ -73,7 +74,7 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMap(): Map<String, Any
 suspend inline fun <reified T: Any>ApplicationCall.receiveMultipartMap(
     uploader: Uploader,
     addUnknown: List<String> = listOf(),
-    beforeUpload: (Map<String, Any>) -> Unit = {}): Map<String, Any> {
+    beforeUpload: (Map<String, Any>) -> Unit = {}): Map<String, Any?> {
 
     val parts = this@receiveMultipartMap.receiveMultipart().readAllParts()
 
@@ -152,13 +153,13 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMultipartMap(
     return resultMap
 }
 
-suspend fun <T: Any>ApplicationCall.receiveMap(kClass: KClass<T>): Map<String, Any> {
+suspend fun <T: Any>ApplicationCall.receiveMap(kClass: KClass<T>): Map<String, Any?> {
     val inputMap = this.receive<Map<String, Any>>()
     val propertiesMap = kClass.declaredMemberProperties.map {
         it.name to it
     }.toMap()
 
-    val resultMap = mutableMapOf<String, Any>()
+    val resultMap = mutableMapOf<String, Any?>()
 
     inputMap.forEach { entry ->
         val key = entry.key
@@ -167,6 +168,7 @@ suspend fun <T: Any>ApplicationCall.receiveMap(kClass: KClass<T>): Map<String, A
 
 
         when {
+            value == null -> resultMap[key] = null
             entry.value is Map<*, *> -> {
                 val element = ObjectMapper().configureForKDone().convertValue(entry.value, property.returnType.jvmErasure.java)
                 resultMap[key] = element

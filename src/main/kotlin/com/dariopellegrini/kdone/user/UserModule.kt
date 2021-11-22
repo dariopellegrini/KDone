@@ -482,7 +482,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 if (!configuration.authorization.checkOwner(update)) throw NotAuthorizedException()
                 call.checkToken(this@authenticate.database)
 
-                val patch: Map<String, Any> = if (call.request.isMultipart()) {
+                val patch: Map<String, Any?> = if (call.request.isMultipart()) {
                     val uploader = configuration.uploader ?: throw ServerException(500, "Uploader not configured")
                     call.receiveMultipartMap<T>(uploader) { map ->
                         ownerForbiddenAttributes.forEach {

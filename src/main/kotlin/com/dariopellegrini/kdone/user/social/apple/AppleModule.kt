@@ -136,7 +136,8 @@ suspend fun checkAppleToken(appleToken: String, appleId: String, bundleId: Strin
 
         override fun getPublicKeyById(kid: String): RSAPublicKey {
             val provider = UrlJwkProvider("https://appleid.apple.com/auth/keys/")
-            val jwk = provider.all.first()
+            val list = provider.all
+            val jwk = list.first { it.id == kid }
             return jwk.publicKey as RSAPublicKey
         }
     }

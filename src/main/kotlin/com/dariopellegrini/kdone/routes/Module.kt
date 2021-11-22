@@ -398,7 +398,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 }
                 webSocketController?.update(updatedElement, call.userAuthOrNull)
             } catch (e: Exception) {
-                call.respondWithException(e)
+//                call.respondWithException(e)
                 configuration.exceptionHandler?.invoke(call, e)
             }
         }

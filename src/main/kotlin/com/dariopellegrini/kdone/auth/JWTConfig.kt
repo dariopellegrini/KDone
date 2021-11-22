@@ -6,7 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import java.util.*
 
 class JWTConfig(private val secret: String,
-                private val issuer: String = "kdone.com",
+                val issuer: String = "kdone.com",
                 private val validityInMs: Long? = null, // 100 hours
                 private val algorithm: Algorithm = Algorithm.HMAC512(secret)) {
 

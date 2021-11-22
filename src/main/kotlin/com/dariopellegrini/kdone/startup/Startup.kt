@@ -6,6 +6,7 @@ import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.client.MongoDatabase
 import com.mongodb.connection.SslSettings
+import io.ktor.features.*
 import io.ktor.routing.Route
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -37,12 +38,12 @@ fun startKDone(port: Int,
                jwtConfig: JWTConfig,
                closure: Route.() -> Unit) {
     embeddedServer(Netty, port) {
-        val settings = MongoClientSettings.builder()
-            .applyConnectionString(ConnectionString(mongoURL))
-            .applyToSslSettings {
-                    builder: SslSettings.Builder -> builder.enabled(true).invalidHostNameAllowed(true)
-            }
-            .build()
+//        val settings = MongoClientSettings.builder()
+//            .applyConnectionString(ConnectionString(mongoURL))
+//            .applyToSslSettings {
+//                    builder: SslSettings.Builder -> builder.enabled(true).invalidHostNameAllowed(true)
+//            }
+//            .build()
         val client = KMongo.createClient(mongoURL)
         installKDone(client.getDatabase(databaseName),
             jwtConfig,
