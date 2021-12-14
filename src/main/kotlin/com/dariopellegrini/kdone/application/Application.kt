@@ -24,6 +24,7 @@ import org.litote.kmongo.KMongo
 
 fun Application.installKDone(mongoDatabase: MongoDatabase,
                              jwtConfig: JWTConfig,
+                             corsConfig: (CORS.Configuration.() -> Unit)? = null,
                              configureRoutes: Routing.() -> Unit) {
     install(DefaultHeaders)
     install(ForwardedHeaderSupport)
@@ -49,7 +50,12 @@ fun Application.installKDone(mongoDatabase: MongoDatabase,
         header("googleId")
         exposeHeader(HttpHeaders.Authorization)
         allowNonSimpleContentTypes = true
-        anyHost()
+
+        if (corsConfig != null) {
+            corsConfig(this)
+        } else {
+            anyHost()
+        }
     }
 
     install(ContentNegotiation) {
@@ -95,7 +101,10 @@ val Route.jwtConfiguration: JWTConfig get() = jwtConfigDelegate ?: throw Misconf
 fun Route.authenticateJWT(optional: Boolean = false,
                           build: Route.() -> Unit) = authenticate("jwt", optional = optional, build = build)
 
-fun Application.installKDone(mongoURL: String, jwtConfig: JWTConfig, configureRoutes: Routing.() -> Unit) {
+fun Application.installKDone(mongoURL: String,
+                             jwtConfig: JWTConfig,
+                             corsConfig: (CORS.Configuration.() -> Unit)? = null,
+                             configureRoutes: Routing.() -> Unit) {
     installKDone(KMongo.createClient(mongoURL.substring(0, mongoURL.lastIndexOf("/")))
-        .getDatabase(mongoURL.substring(mongoURL.lastIndexOf("/") + 1)), jwtConfig, configureRoutes)
+        .getDatabase(mongoURL.substring(mongoURL.lastIndexOf("/") + 1)), jwtConfig, corsConfig, configureRoutes)
 }

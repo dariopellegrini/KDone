@@ -15,9 +15,10 @@ import org.litote.kmongo.KMongo
 fun startKDone(port: Int,
                mongoURL: String,
                jwtConfig: JWTConfig,
+               corsConfig: (CORS.Configuration.() -> Unit)? = null,
                closure: Route.() -> Unit) {
     embeddedServer(Netty, port) {
-        installKDone(mongoURL, jwtConfig, closure)
+        installKDone(mongoURL, jwtConfig, corsConfig, closure)
         println("Ready")
     }.start(wait = true)
 }
@@ -25,9 +26,10 @@ fun startKDone(port: Int,
 fun startKDone(port: Int,
                mongoDatabase: MongoDatabase,
                jwtConfig: JWTConfig,
+               corsConfig: (CORS.Configuration.() -> Unit)? = null,
                closure: Route.() -> Unit) {
     embeddedServer(Netty, port) {
-        installKDone(mongoDatabase, jwtConfig, closure)
+        installKDone(mongoDatabase, jwtConfig, corsConfig, closure)
         println("Ready")
     }.start(wait = true)
 }
@@ -36,6 +38,7 @@ fun startKDone(port: Int,
                mongoURL: String,
                databaseName: String,
                jwtConfig: JWTConfig,
+               corsConfig: (CORS.Configuration.() -> Unit)? = null,
                closure: Route.() -> Unit) {
     embeddedServer(Netty, port) {
 //        val settings = MongoClientSettings.builder()
@@ -47,6 +50,7 @@ fun startKDone(port: Int,
         val client = KMongo.createClient(mongoURL)
         installKDone(client.getDatabase(databaseName),
             jwtConfig,
+            corsConfig,
             closure)
         println("Ready")
     }.start(wait = true)
