@@ -30,7 +30,12 @@ fun Application.installKDone(mongoDatabase: MongoDatabase,
     install(ForwardedHeaderSupport)
     install(CallLogging)
     install(CORS) {
-        anyHost()
+        if (corsConfig != null) {
+            corsConfig(this)
+        } else {
+            anyHost()
+        }
+
         method(HttpMethod.Options)
         method(HttpMethod.Get)
         method(HttpMethod.Post)
@@ -50,12 +55,6 @@ fun Application.installKDone(mongoDatabase: MongoDatabase,
         header("googleId")
         exposeHeader(HttpHeaders.Authorization)
         allowNonSimpleContentTypes = true
-
-        if (corsConfig != null) {
-            corsConfig(this)
-        } else {
-            anyHost()
-        }
     }
 
     install(ContentNegotiation) {
