@@ -18,7 +18,7 @@ import kotlin.collections.toList
 class MongoRepository<T>(private val database: MongoDatabase,
                          private val collectionName: String,
                          private val classType: Class<T>) {
-    private val collection = database.getCollection(collectionName, classType)
+    val collection = database.getCollection(collectionName, classType)
 
     suspend fun insert(element: T) = withContext(Dispatchers.IO) {
         collection.insertOne(element)

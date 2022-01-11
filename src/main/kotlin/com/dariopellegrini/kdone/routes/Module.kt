@@ -273,7 +273,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 call.checkToken(this@authenticate.database)
                 checkPermission(call.userAuthOrNull, configuration.authorization, AuthEnum.CREATE)
 
-                val element = if (call.request.isMultipart()) {
+                var element = if (call.request.isMultipart()) {
                     val uploader = configuration.uploader ?: throw ServerException(500, "Uploader not configured")
                     val dtoCreate = configuration.dtoConfiguration?.createDTO(userAuth = call.userAuthOrNull)
                     if (dtoCreate != null) {
@@ -313,6 +313,34 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 (element as? Identifiable)?.owner = call.userAuthOrNull?.userId?.mongoId()
 
                 repository.insert(element)
+
+                if (element is Identifiable && (configuration.autolookup || call.parameters[lookupParameter] == "true")) {
+                    val aggregateList = mutableListOf<Bson>()
+                    aggregateList += match(Identifiable::_id eq element._id)
+                    T::class.java.declaredFields.forEach { field ->
+                        field.isAccessible = true
+                        if (field.isAnnotationPresent(Lookup::class.java)) {
+                            val annotation = field.getAnnotation(Lookup::class.java)
+                            aggregateList += lookup(
+                                annotation.collectionName,
+                                annotation.parameter,
+                                "_id",
+                                field.name
+                            )
+                            val classifier = field.kotlinProperty?.returnType?.classifier
+                            if (classifier != List::class &&
+                                classifier != Array::class &&
+                                classifier != Set::class
+                            ) {
+                                val options = UnwindOptions()
+                                options.preserveNullAndEmptyArrays(true)
+                                aggregateList += unwind("\$${field.name}", options)
+                            }
+                        }
+                    }
+                    element = repository.aggregateBsonList(aggregateList).firstOrNull()
+                        ?: element
+                }
 
                 val dtoRead = configuration.dtoConfiguration?.readDTO(call.userAuthOrNull, element)
                 if (dtoRead != null) {
@@ -380,7 +408,34 @@ inline fun <reified T : Any>Route.module(endpoint: String,
 
                 repository.updateOneById(id.mongoId(), patch)
 
-                val updatedElement = repository.findById(id.mongoId())
+                val updatedElement = if (element is Identifiable && (configuration.autolookup || call.parameters[lookupParameter] == "true")) {
+                    val aggregateList = mutableListOf<Bson>()
+                    aggregateList += match(Identifiable::_id eq element._id)
+                    T::class.java.declaredFields.forEach { field ->
+                        field.isAccessible = true
+                        if (field.isAnnotationPresent(Lookup::class.java)) {
+                            val annotation = field.getAnnotation(Lookup::class.java)
+                            aggregateList += lookup(
+                                annotation.collectionName,
+                                annotation.parameter,
+                                "_id",
+                                field.name
+                            )
+                            val classifier = field.kotlinProperty?.returnType?.classifier
+                            if (classifier != List::class &&
+                                classifier != Array::class &&
+                                classifier != Set::class
+                            ) {
+                                val options = UnwindOptions()
+                                options.preserveNullAndEmptyArrays(true)
+                                aggregateList += unwind("\$${field.name}", options)
+                            }
+                        }
+                    }
+                    repository.aggregateBsonList(aggregateList).firstOrNull() ?: repository.findById(id.mongoId())
+                } else {
+                    repository.findById(id.mongoId())
+                }
 
                 val dtoRead = configuration.dtoConfiguration?.readDTO(call.userAuthOrNull, updatedElement)
                 if (dtoRead != null) {
