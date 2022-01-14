@@ -69,7 +69,6 @@ inline fun <reified T : Any>Route.module(endpoint: String,
     }
     
     authenticate("jwt", optional = true) {
-
         get(endpoint) {
             try {
                 call.checkToken(this@authenticate.database)
