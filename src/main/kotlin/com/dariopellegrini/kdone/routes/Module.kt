@@ -102,6 +102,11 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     queryMap["softDeleted"] = false
                 }
 
+                if (queryMap[ignoreSoftDeletedParameter] == true) {
+                    queryMap.remove("softDeleted")
+                    queryMap.remove(ignoreSoftDeletedParameter)
+                }
+
                 val mongoQuery = call.parameters[queryParameter]
                 val query = if (mongoQuery != null && queryMap.isNotEmpty()) {
                     val first = queryMap.json.removeSuffix("}")

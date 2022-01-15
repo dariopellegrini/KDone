@@ -11,3 +11,4 @@ const val limitParameter = "_limit"
 const val skipParameter = "_skip"
 const val lookupParameter = "_lookup"
 val forbiddenUserParameters = listOf("confirmed", "facebookId", "appleId", "googleId", "otp")
+const val ignoreSoftDeletedParameter = "_ignoreSoftDeleted"
