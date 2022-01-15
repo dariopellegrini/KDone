@@ -16,11 +16,8 @@ import com.dariopellegrini.kdone.exceptions.ForbiddenException
 import com.dariopellegrini.kdone.exceptions.NotFoundException
 import com.dariopellegrini.kdone.exceptions.ServerException
 import com.dariopellegrini.kdone.extensions.*
-import com.dariopellegrini.kdone.model.DateModel
-import com.dariopellegrini.kdone.model.Identifiable
-import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.languages.localize
-import com.dariopellegrini.kdone.model.OptionsEndpoint
+import com.dariopellegrini.kdone.model.*
 import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.dariopellegrini.kdone.websockets.WebSocketController
 import com.mongodb.client.model.UnwindOptions
@@ -98,6 +95,13 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                             else -> queryMap[pair.first] = pair.second
                         }
                     }
+
+                if (!queryMap.contains("softDeleted") &&
+                    configuration.enableSoftDelete &&
+                    T::class.isSubclassOf(SoftDeletable::class)) {
+                    queryMap["softDeleted"] = false
+                }
+
                 val mongoQuery = call.parameters[queryParameter]
                 val query = if (mongoQuery != null && queryMap.isNotEmpty()) {
                     val first = queryMap.json.removeSuffix("}")

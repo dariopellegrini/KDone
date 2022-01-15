@@ -44,6 +44,8 @@ class RouteConfiguration<T: Any> {
 
     var autolookup = false
 
+    var enableSoftDelete = false
+
     fun authorizations(closure: Authorization.() -> Unit) {
         val authorization = Authorization()
         authorization.closure()
