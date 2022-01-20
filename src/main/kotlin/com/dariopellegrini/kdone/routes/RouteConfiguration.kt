@@ -24,7 +24,7 @@ class RouteConfiguration<T: Any> {
     var beforeGet: (suspend (ApplicationCall, Map<String, Any>) -> Unit)? = null
     var afterGet: (suspend (ApplicationCall, Map<String, Any>, List<T>) -> Unit)? = null
 
-    var beforeUpdate: (suspend (ApplicationCall, Id<T>, Map<String, Any?>) -> Unit)? = null
+    var beforeUpdate: (suspend (ApplicationCall, Id<T>, MutableMap<String, Any?>) -> Unit)? = null
     var afterUpdate: (suspend (ApplicationCall, Map<String, Any?>, T) -> Unit)? = null
 
     var beforeDelete: (suspend (ApplicationCall, Id<T>) -> Unit)? = null
@@ -45,6 +45,8 @@ class RouteConfiguration<T: Any> {
     var autolookup = false
 
     var enableSoftDelete = false
+
+    var useObjectsForArrays = false
 
     fun authorizations(closure: Authorization.() -> Unit) {
         val authorization = Authorization()
@@ -78,7 +80,7 @@ class RouteConfiguration<T: Any> {
         afterGet = closure
     }
 
-    fun beforeUpdate(closure: suspend (ApplicationCall, Id<T>, Map<String, Any?>) -> Unit) {
+    fun beforeUpdate(closure: suspend (ApplicationCall, Id<T>, MutableMap<String, Any?>) -> Unit) {
         beforeUpdate = closure
     }
 

@@ -15,6 +15,7 @@ import com.dariopellegrini.kdone.email.model.UserConfirmation
 import com.dariopellegrini.kdone.exceptions.*
 import com.dariopellegrini.kdone.extensions.*
 import com.dariopellegrini.kdone.model.ResourceFile
+import com.dariopellegrini.kdone.model.SoftDeletable
 import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.dariopellegrini.kdone.passwordrecovery.model.PasswordRecovery
 import com.dariopellegrini.kdone.privacy.privacyModule
@@ -207,6 +208,12 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     "$first, $second}"
                 } else mongoQuery ?: queryMap.json
 
+//                if (!queryMap.contains("softDeleted") &&
+//                    configuration.enableSoftDelete &&
+//                    T::class.isSubclassOf(SoftDeletable::class)) {
+//                    queryMap["softDeleted"] = false
+//                }
+
                 val users = when {
                     userAuth?.role != null -> {
                         var bsonList: MutableList<Bson>? = null
@@ -246,7 +253,13 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     }
                 }
 
-                call.respond(HttpStatusCode.OK, users.map { it.secure() })
+                call.respond(HttpStatusCode.OK,
+                    if (configuration.useObjectsForArrays) {
+                        mapOf("results" to users.map { it.secure() })
+                    } else {
+                        users.map { it.secure() }
+                    }
+                )
             } catch (e: Exception) {
                 call.respondWithException(e)
                 configuration.exceptionHandler?.invoke(call, e)

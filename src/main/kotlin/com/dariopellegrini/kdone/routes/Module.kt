@@ -186,9 +186,30 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 // Localization
                 if (call.language != null) {
                     call.respond(HttpStatusCode.OK,
-                        responseElements.map { it.localize(call.language!!, configuration.defaultLanguage) })
+                        if (configuration.useObjectsForArrays) {
+                            mapOf("results" to responseElements.map {
+                                it.localize(
+                                    call.language!!,
+                                    configuration.defaultLanguage
+                                )
+                            })
+                        } else {
+                            responseElements.map {
+                                it.localize(
+                                    call.language!!,
+                                    configuration.defaultLanguage
+                                )
+                            }
+                        }
+                    )
                 } else {
-                    call.respond(HttpStatusCode.OK, responseElements)
+                    call.respond(HttpStatusCode.OK,
+                        if (configuration.useObjectsForArrays) {
+                            mapOf("results" to responseElements)
+                        } else {
+                            responseElements
+                        }
+                    )
                 }
 
                 configuration.afterGet?.let {
@@ -397,7 +418,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     } else {
                         call.receiveMap<T>()
                     }
-                }
+                }.toMutableMap()
 
                 // Configure date
                 if (element is DateModel) {

@@ -60,6 +60,10 @@ open class UserRouteConfiguration<T: KDoneUser> {
 
     var passwordRecoveryConfiguration: PasswordRecoveryConfiguration? = null
 
+//    var enableSoftDelete = false
+
+    var useObjectsForArrays = false
+
     // OTP
     var otpEnabled = false
     var otpSenders: List<UserSender<T>>? = null
