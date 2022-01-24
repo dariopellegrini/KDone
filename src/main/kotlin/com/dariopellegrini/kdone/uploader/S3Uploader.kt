@@ -21,6 +21,7 @@ open class S3Uploader(val baseFolder: String,
                  signingRegion: String): Uploader {
 
     private val doCred = AWSStaticCredentialsProvider(BasicAWSCredentials(accessKey, secretKey))
+
     val s3Client = AmazonS3ClientBuilder.standard()
         .withCredentials(doCred)
         .withEndpointConfiguration(
