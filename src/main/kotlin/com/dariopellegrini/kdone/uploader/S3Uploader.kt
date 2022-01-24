@@ -21,7 +21,7 @@ open class S3Uploader(val baseFolder: String,
                  signingRegion: String): Uploader {
 
     private val doCred = AWSStaticCredentialsProvider(BasicAWSCredentials(accessKey, secretKey))
-    private val s3Client = AmazonS3ClientBuilder.standard()
+    val s3Client = AmazonS3ClientBuilder.standard()
         .withCredentials(doCred)
         .withEndpointConfiguration(
             AwsClientBuilder.EndpointConfiguration(
@@ -35,7 +35,7 @@ open class S3Uploader(val baseFolder: String,
         .build()
 
     override suspend fun save(modelName: String, fileName: String, file: File, contentType: String): String? {
-        return upload(modelName, fileName, file, contentType)
+        return upload(modelName, fileName.replace(" ", ""), file, contentType)
     }
 
     private suspend fun upload(folder: String, name: String, file: File, contentType: String): String = withContext(Dispatchers.IO) {
