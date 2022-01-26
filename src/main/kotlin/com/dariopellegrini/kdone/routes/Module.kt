@@ -152,10 +152,6 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                             if (field.isAnnotationPresent(Lookup::class.java)) {
                                 val annotation = field.getAnnotation(Lookup::class.java)
                                 aggregateList += lookup(annotation.collectionName, annotation.parameter, annotation.foreignParameter, field.name)
-                                val match = annotation.match
-                                if (match.isNotEmpty()) {
-                                    aggregateList.add(match(KMongoUtil.toBson(match)))
-                                }
                                 val classifier = field.kotlinProperty?.returnType?.classifier
                                 if (classifier != List::class &&
                                     classifier != Array::class &&

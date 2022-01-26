@@ -6,5 +6,4 @@ import org.bson.conversions.Bson
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Lookup(val parameter: String,
                         val collectionName: String,
-                        val foreignParameter: String = "_id",
-                        val match: String = "")
+                        val foreignParameter: String = "_id")
