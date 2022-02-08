@@ -137,7 +137,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                         if (sortParameter != null) {
                             aggregateList += sort(
                                 KMongoUtil.toBson("""{$sortParameter:${
-                                    if (sortDescending) -1 else 1
+                                    if (sortDescending) 1 else -1
                                 }}""")
                             )
                         }
