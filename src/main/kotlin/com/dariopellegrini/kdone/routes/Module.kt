@@ -147,6 +147,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                         if (limit != null) {
                             aggregateList += limit(limit)
                         }
+
                         T::class.java.declaredFields.forEach { field ->
                             field.isAccessible = true
                             if (field.isAnnotationPresent(Lookup::class.java)) {
