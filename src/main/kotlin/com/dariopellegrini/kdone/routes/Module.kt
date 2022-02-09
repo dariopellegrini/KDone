@@ -43,7 +43,6 @@ import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.kotlinProperty
-import org.litote.kmongo.MongoOperator.*
 
 inline fun <reified T : Any>Route.module(endpoint: String,
                                          collectionName: String? = null,
@@ -137,7 +136,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                         if (sortParameter != null) {
                             aggregateList += sort(
                                 KMongoUtil.toBson("""{$sortParameter:${
-                                    if (sortDescending) 1 else -1
+                                    if (sortDescending) -1 else 1
                                 }}""")
                             )
                         }
