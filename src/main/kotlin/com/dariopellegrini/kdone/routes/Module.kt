@@ -19,8 +19,11 @@ import com.dariopellegrini.kdone.extensions.*
 import com.dariopellegrini.kdone.languages.localize
 import com.dariopellegrini.kdone.model.*
 import com.dariopellegrini.kdone.mongo.MongoRepository
+import com.dariopellegrini.kdone.mongo.conditionalLookup
 import com.dariopellegrini.kdone.websockets.WebSocketController
 import com.mongodb.client.model.UnwindOptions
+import com.mongodb.client.result.DeleteResult
+import com.mongodb.client.result.UpdateResult
 import io.ktor.application.call
 import io.ktor.auth.authenticate
 import io.ktor.http.HttpStatusCode
@@ -57,7 +60,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
         repository.createIndex(it)
     }
 
-    val webSocketController = if (configuration.webSocketActive == true) {
+    val webSocketController = if (configuration.webSocketActive) {
         WebSocketController<T>(repository, endpoint, configuration.authorization).apply {
             configure(this@module)
         }
@@ -96,23 +99,24 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                         }
                     }
 
-                if (!queryMap.contains("softDeleted") &&
-                    configuration.enableSoftDelete &&
-                    T::class.isSubclassOf(SoftDeletable::class)) {
-                    queryMap["softDeleted"] = false
-                }
+                val checkSoftDelete = !queryMap.contains("softDeleted") &&
+                        configuration.enableSoftDelete &&
+                        T::class.isSubclassOf(SoftDeletable::class) &&
+                        queryMap[ignoreSoftDeletedParameter] != true
 
-                if (queryMap[ignoreSoftDeletedParameter] == true) {
-                    queryMap.remove("softDeleted")
-                    queryMap.remove(ignoreSoftDeletedParameter)
-                }
+                queryMap.remove(ignoreSoftDeletedParameter)
 
                 val mongoQuery = call.parameters[queryParameter]
-                val query = if (mongoQuery != null && queryMap.isNotEmpty()) {
+                var query = if (mongoQuery != null && queryMap.isNotEmpty()) {
                     val first = queryMap.json.removeSuffix("}")
                     val second = mongoQuery.removePrefix("{").removeSuffix("}")
                     "$first, $second}"
                 } else mongoQuery ?: queryMap.json
+
+                if (checkSoftDelete) {
+                    val bson = and(query.bson, SoftDeletable::softDeleted ne true)
+                    query = bson.json
+                }
 
                 configuration.beforeGet?.let { it(call,
                     call.request.queryParameters.toMap().map { it.key to it.value.first() }.toMap())
@@ -151,7 +155,11 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                             field.isAccessible = true
                             if (field.isAnnotationPresent(Lookup::class.java)) {
                                 val annotation = field.getAnnotation(Lookup::class.java)
-                                aggregateList += lookup(annotation.collectionName, annotation.parameter, annotation.foreignParameter, field.name)
+                                aggregateList += if (!checkSoftDelete) {
+                                    lookup(annotation.collectionName, annotation.parameter, annotation.foreignParameter, field.name)
+                                } else {
+                                    conditionalLookup(annotation.collectionName, annotation.parameter, annotation.foreignParameter, field.name, match(SoftDeletable::softDeleted ne true))
+                                }
                                 val classifier = field.kotlinProperty?.returnType?.classifier
                                 if (classifier != List::class &&
                                     classifier != Array::class &&
@@ -517,21 +525,36 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     null
                 }
 
-                val deleteResult = repository.deleteById(id.mongoId())
-
-                configuration.uploader?.let {
-                    uploader ->
-                    val jobs = urls?.map { url ->
-                        async { uploader.delete(url) }
+                val deleteResult: Any = if (configuration.enableSoftDelete &&
+                    T::class.isSubclassOf(SoftDeletable::class) &&
+                    call.parameters[forceDeleteParameter] != "true") {
+                    repository.updateOneById(id.mongoId(), mapOf(SoftDeletable::softDeleted.name to true))
+                } else {
+                    repository.deleteById(id.mongoId()).also {
+                        configuration.uploader?.let {
+                                uploader ->
+                            val jobs = urls?.map { url ->
+                                async { uploader.delete(url) }
+                            }
+                            jobs?.awaitAll()
+                        }
                     }
-                    jobs?.awaitAll()
                 }
 
                 call.respond(HttpStatusCode.OK, deleteResult)
 
-                configuration.afterDelete?.let {
-                    it(call, deleteResult)
+                if (deleteResult is DeleteResult) {
+                    configuration.afterDelete?.let {
+                        it(call, deleteResult)
+                    }
                 }
+
+                if (deleteResult is UpdateResult) {
+                    configuration.afterSoftDelete?.let {
+                        it(call, deleteResult)
+                    }
+                }
+
             } catch (e: Exception) {
                 call.respondWithException(e)
                 configuration.exceptionHandler?.invoke(call, e)

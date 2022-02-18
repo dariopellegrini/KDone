@@ -8,6 +8,7 @@ import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.dariopellegrini.kdone.uploader.S3Uploader
 import com.dariopellegrini.kdone.uploader.Uploader
 import com.mongodb.client.result.DeleteResult
+import com.mongodb.client.result.UpdateResult
 import io.ktor.application.ApplicationCall
 import io.ktor.util.pipeline.PipelineContext
 import org.litote.kmongo.Id
@@ -29,6 +30,7 @@ class RouteConfiguration<T: Any> {
 
     var beforeDelete: (suspend (ApplicationCall, Id<T>) -> Unit)? = null
     var afterDelete: (suspend (ApplicationCall, DeleteResult) -> Unit)? = null
+    var afterSoftDelete: (suspend (ApplicationCall, UpdateResult) -> Unit)? = null
 
     var dtoConfiguration: DTOConfiguration<T>? = null
 
