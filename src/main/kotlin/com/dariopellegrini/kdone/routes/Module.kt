@@ -99,14 +99,16 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                         }
                     }
 
-                val checkSoftDelete = !queryMap.contains("softDeleted") &&
+                val mongoQuery = call.parameters[queryParameter]
+
+                val checkSoftDelete = !queryMap.contains("dateDeleted") &&
+                        mongoQuery?.contains("dateDeleted") != true &&
                         configuration.enableSoftDelete &&
                         T::class.isSubclassOf(SoftDeletable::class) &&
                         queryMap[ignoreSoftDeletedParameter] != true
 
                 queryMap.remove(ignoreSoftDeletedParameter)
 
-                val mongoQuery = call.parameters[queryParameter]
                 var query = if (mongoQuery != null && queryMap.isNotEmpty()) {
                     val first = queryMap.json.removeSuffix("}")
                     val second = mongoQuery.removePrefix("{").removeSuffix("}")
@@ -114,7 +116,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 } else mongoQuery ?: queryMap.json
 
                 if (checkSoftDelete) {
-                    val bson = and(query.bson, SoftDeletable::softDeleted ne true)
+                    val bson = and(query.bson, SoftDeletable::dateDeleted eq null)
                     query = bson.json
                 }
 
@@ -158,7 +160,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                                 aggregateList += if (!checkSoftDelete) {
                                     lookup(annotation.collectionName, annotation.parameter, annotation.foreignParameter, field.name)
                                 } else {
-                                    conditionalLookup(annotation.collectionName, annotation.parameter, annotation.foreignParameter, field.name, match(SoftDeletable::softDeleted ne true))
+                                    conditionalLookup(annotation.collectionName, annotation.parameter, annotation.foreignParameter, field.name, match(SoftDeletable::dateDeleted eq null))
                                 }
                                 val classifier = field.kotlinProperty?.returnType?.classifier
                                 if (classifier != List::class &&
@@ -528,7 +530,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 val deleteResult: Any = if (configuration.enableSoftDelete &&
                     T::class.isSubclassOf(SoftDeletable::class) &&
                     call.parameters[forceDeleteParameter] != "true") {
-                    repository.updateOneById(id.mongoId(), mapOf(SoftDeletable::softDeleted.name to true))
+                    repository.updateOneById(id.mongoId(), mapOf(SoftDeletable::dateDeleted.name to Date()))
                 } else {
                     repository.deleteById(id.mongoId()).also {
                         configuration.uploader?.let {

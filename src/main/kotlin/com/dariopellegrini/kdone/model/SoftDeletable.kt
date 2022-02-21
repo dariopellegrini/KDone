@@ -1,5 +1,7 @@
 package com.dariopellegrini.kdone.model
 
+import java.util.*
+
 interface SoftDeletable {
-    var softDeleted: Boolean
+    var dateDeleted: Date?
 }
