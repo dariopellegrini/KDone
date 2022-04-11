@@ -86,12 +86,12 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMultipartMap(
     val formParts = parts.filterIsInstance<PartData.FormItem>().filter {
         it.name != null
     }.map {
-        it.name!!  to when {
-            it.value.toIntOrNull() != null -> it.value.toInt()
-            it.value.toDoubleOrNull() != null -> it.value.toDouble()
-            it.value == "true" -> true
-            it.value == "false" -> false
-            it.value.dateOrNull != null -> it.value.date
+        it.name!! to when {
+            propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Int::class) == true && it.value.toIntOrNull() != null -> it.value.toInt()
+            propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Double::class) == true && it.value.toDoubleOrNull() != null -> it.value.toDouble()
+            propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Boolean::class) == true && it.value == "true" -> true
+            propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Boolean::class) == true && it.value == "false" -> false
+            propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Date::class) == true && it.value.dateOrNull != null -> it.value.date
             else -> it.value
         }
     }.toMap().toMutableMap()
@@ -212,12 +212,12 @@ suspend fun <T: Any>ApplicationCall.receiveMultipartMap(
     val formParts = parts.filterIsInstance<PartData.FormItem>().filter {
         it.name != null
     }.map {
-        it.name!!  to when {
-            it.value.toIntOrNull() != null -> it.value.toInt()
-            it.value.toDoubleOrNull() != null -> it.value.toDouble()
-            it.value == "true" -> true
-            it.value == "false" -> false
-            it.value.dateOrNull != null -> it.value.date
+        it.name!! to when {
+            propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Int::class) == true && it.value.toIntOrNull() != null -> it.value.toInt()
+            propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Double::class) == true && it.value.toDoubleOrNull() != null -> it.value.toDouble()
+            propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Boolean::class) == true && it.value == "true" -> true
+            propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Boolean::class) == true && it.value == "false" -> false
+            propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Date::class) == true && it.value.dateOrNull != null -> it.value.date
             else -> it.value
         }
     }.toMap().toMutableMap()
