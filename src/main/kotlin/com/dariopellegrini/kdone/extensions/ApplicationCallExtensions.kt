@@ -103,11 +103,26 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMultipartMap(
         val value = entry.value
         if (!addUnknown.contains(key)) {
             val property = propertiesMap[key] ?: throw IOException("$key not found for class $kClass")
-
             when {
                 entry.value is Map<*, *> -> {
                     val element = ObjectMapper().configureForKDone().convertValue(entry.value, property.returnType.jvmErasure.java)
                     resultMap[key] = element
+                }
+                property.returnType.jvmErasure.isSubclassOf(List::class) && entry.value is String -> {
+                    val element = ObjectMapper().configureForKDone().readValue(entry.value.toString(), ArrayList::class.java)
+                    val listInnerType = property.returnType.arguments.firstOrNull()?.type
+                    if (listInnerType != null && listInnerType.jvmErasure.isSubclassOf(Id::class) && element is ArrayList<*>) {
+                        val list = element.toMutableList()
+                        list.indices.forEach { i ->
+                            val elementValue = element[i]
+                            if (elementValue is String && ObjectId.isValid(elementValue)) {
+                                list[i] = elementValue.mongoId<Any>()
+                            }
+                        }
+                        resultMap[key] = list
+                    } else {
+                        resultMap[key] = element
+                    }
                 }
                 value is String && (value.trimStart().startsWith("{") && value.trimEnd().endsWith("}") ||
                         value.trimStart().startsWith("[") && value.trimEnd().endsWith("]")) -> {
@@ -173,6 +188,22 @@ suspend fun <T: Any>ApplicationCall.receiveMap(kClass: KClass<T>): Map<String, A
                 val element = ObjectMapper().configureForKDone().convertValue(entry.value, property.returnType.jvmErasure.java)
                 resultMap[key] = element
             }
+            property.returnType.jvmErasure.isSubclassOf(List::class) && entry.value is String -> {
+                val element = ObjectMapper().configureForKDone().readValue(entry.value.toString(), ArrayList::class.java)
+                val listInnerType = property.returnType.arguments.firstOrNull()?.type
+                if (listInnerType != null && listInnerType.jvmErasure.isSubclassOf(Id::class) && element is ArrayList<*>) {
+                    val list = element.toMutableList()
+                    list.indices.forEach { i ->
+                        val elementValue = element[i]
+                        if (elementValue is String && ObjectId.isValid(elementValue)) {
+                            list[i] = elementValue.mongoId<Any>()
+                        }
+                    }
+                    resultMap[key] = list
+                } else {
+                    resultMap[key] = element
+                }
+            }
             value is String && (value.trimStart().startsWith("{") && value.trimEnd().endsWith("}") ||
                     value.trimStart().startsWith("[") && value.trimEnd().endsWith("]")) -> {
                 resultMap[key] = ObjectMapper().configureForKDone().readValue(value, property.returnType.jvmErasure.java)
@@ -232,6 +263,26 @@ suspend fun <T: Any>ApplicationCall.receiveMultipartMap(
 
             when {
                 entry.value is Map<*, *> -> {
+                    val element = ObjectMapper().configureForKDone().convertValue(entry.value, property.returnType.jvmErasure.java)
+                    resultMap[key] = element
+                }
+                property.returnType.jvmErasure.isSubclassOf(List::class) && entry.value is String -> {
+                    val element = ObjectMapper().configureForKDone().readValue(entry.value.toString(), ArrayList::class.java)
+                    val listInnerType = property.returnType.arguments.firstOrNull()?.type
+                    if (listInnerType != null && listInnerType.jvmErasure.isSubclassOf(Id::class) && element is ArrayList<*>) {
+                        val list = element.toMutableList()
+                        list.indices.forEach { i ->
+                            val elementValue = element[i]
+                            if (elementValue is String && ObjectId.isValid(elementValue)) {
+                                list[i] = elementValue.mongoId<Any>()
+                            }
+                        }
+                        resultMap[key] = list
+                    } else {
+                        resultMap[key] = element
+                    }
+                }
+                property.returnType.jvmErasure.isSubclassOf(List::class) && entry.value is List<*> -> {
                     val element = ObjectMapper().configureForKDone().convertValue(entry.value, property.returnType.jvmErasure.java)
                     resultMap[key] = element
                 }
