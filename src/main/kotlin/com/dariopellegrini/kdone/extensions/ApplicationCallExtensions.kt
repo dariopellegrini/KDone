@@ -34,7 +34,6 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMap(): Map<String, Any
     }.toMap()
 
     val resultMap = mutableMapOf<String, Any?>()
-
     inputMap.forEach { entry ->
         val key = entry.key
         val value = entry.value
