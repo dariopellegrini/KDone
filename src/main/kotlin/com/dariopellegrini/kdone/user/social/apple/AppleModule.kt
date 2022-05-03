@@ -86,6 +86,8 @@ inline fun <reified T: KDoneUser>Route.apple(endpoint: String = "users",
                         call.receiveMultipart().receive(null)
                     else
                         call.receive()
+
+                    // Commented to prevent different username selection on different devices
 //                    if (existingUser.username != input.username) throw ForbiddenException()
 
                     val token = jwtConfig.makeToken(UserAuth(existingUser._id.toString(), existingUser.role))
