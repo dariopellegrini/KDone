@@ -86,7 +86,7 @@ inline fun <reified T: KDoneUser>Route.apple(endpoint: String = "users",
                         call.receiveMultipart().receive(null)
                     else
                         call.receive()
-                    if (existingUser.username != input.username) throw ForbiddenException()
+//                    if (existingUser.username != input.username) throw ForbiddenException()
 
                     val token = jwtConfig.makeToken(UserAuth(existingUser._id.toString(), existingUser.role))
                     call.response.header(HttpHeaders.Authorization, token)
