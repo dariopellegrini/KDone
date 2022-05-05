@@ -1,20 +1,16 @@
 package com.dariopellegrini.kdone.routes
 
-import com.dariopellegrini.kdone.application.database
 import com.dariopellegrini.kdone.auth.Authorization
 import com.dariopellegrini.kdone.dto.DTOConfiguration
-import com.dariopellegrini.kdone.interfaces.RouteActions
 import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.dariopellegrini.kdone.uploader.S3Uploader
 import com.dariopellegrini.kdone.uploader.Uploader
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import io.ktor.application.ApplicationCall
-import io.ktor.util.pipeline.PipelineContext
 import org.litote.kmongo.Id
 import java.io.File
 
-typealias Headers = Map<String, List<String>>
 class RouteConfiguration<T: Any> {
     var authorization: Authorization? = null
     var uploader: Uploader? = null
