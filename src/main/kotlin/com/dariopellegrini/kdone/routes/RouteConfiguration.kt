@@ -98,6 +98,10 @@ class RouteConfiguration<T: Any> {
         afterDelete = closure
     }
 
+    fun afterSoftDelete(closure: suspend (ApplicationCall, UpdateResult) -> Unit) {
+        afterSoftDelete = closure
+    }
+
     fun dto(closure: DTOConfiguration<T>.() -> Any) {
         dtoConfiguration = DTOConfiguration()
         dtoConfiguration?.closure()
