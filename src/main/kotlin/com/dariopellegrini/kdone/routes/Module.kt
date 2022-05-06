@@ -84,7 +84,8 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 configuration.beforeGet?.let { it(call, queryMap) }
 
                 call.request.queryParameters.toMap()
-                    .filter { it.key != queryParameter &&
+                    .filter {
+//                        it.key != queryParameter &&
                             it.key != limitParameter &&
                             it.key != skipParameter &&
                             it.key != lookupParameter &&
@@ -102,7 +103,8 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                         }
                     }
 
-                val mongoQuery = call.parameters[queryParameter]
+                val mongoQuery = queryMap[queryParameter] as? String
+                queryMap.remove(queryParameter)
 
                 val checkSoftDelete = !queryMap.contains("dateDeleted") &&
                         mongoQuery?.contains("dateDeleted") != true &&
