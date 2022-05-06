@@ -70,7 +70,7 @@ class RouteConfiguration<T: Any> {
         afterCreate = closure
     }
 
-    fun beforeGet(closure: suspend (ApplicationCall, Map<String, Any>) -> Unit) {
+    fun beforeGet(closure: suspend (ApplicationCall, MutableMap<String, Any>) -> Unit) {
         beforeGet = closure
     }
 
