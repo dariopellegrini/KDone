@@ -192,7 +192,9 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
                 // Filters
                 val queryMap = mutableMapOf<String, Any>()
-                call.request.queryParameters.toMap().filter { it.key != queryParameter }.map { it.key to it.value.first() }.map { pair ->
+                call.request.queryParameters.toMap()
+//                    .filter { it.key != queryParameter }
+                    .map { it.key to it.value.first() }.map { pair ->
                     when {
                         pair.second.toIntOrNull() != null -> queryMap[pair.first] = pair.second.toInt()
                         pair.second.toDoubleOrNull() != null -> queryMap[pair.first] = pair.second.toDouble()
@@ -201,7 +203,13 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                         else -> queryMap[pair.first] = pair.second
                     }
                 }
-                val mongoQuery = call.parameters[queryParameter]
+
+                configuration.beforeGet?.let { it(call, queryMap) }
+
+                val mongoQuery = queryMap[queryParameter] as? String
+                queryMap.remove(queryParameter)
+
+//                val mongoQuery = call.parameters[queryParameter]
                 val query = if (mongoQuery != null && queryMap.isNotEmpty()) {
                     val first = queryMap.json.removeSuffix("}")
                     val second = mongoQuery.removePrefix("{").removeSuffix("}")

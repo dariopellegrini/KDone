@@ -34,10 +34,10 @@ open class UserRouteConfiguration<T: KDoneUser> {
     var beforeCreate: (suspend (ApplicationCall, T) -> Unit)? = null
     var afterCreate: (suspend (ApplicationCall, T) -> Unit)? = null
 
-    var beforeGet: (suspend (ApplicationCall, Map<String, Any>) -> Unit)? = null
+    var beforeGet: (suspend (ApplicationCall, MutableMap<String, Any>) -> Unit)? = null
     var afterGet: (suspend (ApplicationCall, Map<String, Any>, List<T>) -> Unit)? = null
 
-    var beforeUpdate: (suspend (ApplicationCall, Id<T>, Map<String, Any?>) -> Unit)? = null
+    var beforeUpdate: (suspend (ApplicationCall, Id<T>, MutableMap<String, Any?>) -> Unit)? = null
     var afterUpdate: (suspend (ApplicationCall, Map<String, Any?>, T) -> Unit)? = null
 
     var beforeDelete: (suspend (ApplicationCall, Id<T>) -> Unit)? = null
@@ -112,7 +112,7 @@ open class UserRouteConfiguration<T: KDoneUser> {
         afterCreate = closure
     }
 
-    fun beforeGet(closure: suspend (ApplicationCall, Map<String, Any>) -> Unit) {
+    fun beforeGet(closure: suspend (ApplicationCall, MutableMap<String, Any>) -> Unit) {
         beforeGet = closure
     }
 
@@ -120,7 +120,7 @@ open class UserRouteConfiguration<T: KDoneUser> {
         afterGet = closure
     }
 
-    fun beforeUpdate(closure: suspend (ApplicationCall, Id<T>, Map<String, Any?>) -> Unit) {
+    fun beforeUpdate(closure: suspend (ApplicationCall, Id<T>, MutableMap<String, Any?>) -> Unit) {
         beforeUpdate = closure
     }
 

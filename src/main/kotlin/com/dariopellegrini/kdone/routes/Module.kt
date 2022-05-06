@@ -81,8 +81,6 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 // Filters
                 val queryMap = mutableMapOf<String, Any>()
 
-                configuration.beforeGet?.let { it(call, queryMap) }
-
                 call.request.queryParameters.toMap()
                     .filter {
 //                        it.key != queryParameter &&
@@ -102,6 +100,8 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                             else -> queryMap[pair.first] = pair.second
                         }
                     }
+
+                configuration.beforeGet?.let { it(call, queryMap) }
 
                 val mongoQuery = queryMap[queryParameter] as? String
                 queryMap.remove(queryParameter)
