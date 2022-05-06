@@ -5,6 +5,7 @@ import com.dariopellegrini.kdone.auth.JWTConfig
 import com.dariopellegrini.kdone.delegates.Delegate
 import com.dariopellegrini.kdone.exceptions.MisconfigurationException
 import com.dariopellegrini.kdone.extensions.configureForKDone
+import com.dariopellegrini.kdone.mongo.KDoneMongoContainer
 import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
@@ -18,6 +19,7 @@ import io.ktor.jackson.jackson
 import io.ktor.routing.Route
 import io.ktor.routing.Routing
 import io.ktor.routing.routing
+import io.ktor.util.pipeline.*
 import io.ktor.websocket.*
 import org.bson.Document
 import org.litote.kmongo.KMongo
@@ -26,6 +28,8 @@ fun Application.installKDone(mongoDatabase: MongoDatabase,
                              jwtConfig: JWTConfig,
                              corsConfig: (CORS.Configuration.() -> Unit)? = null,
                              configureRoutes: Routing.() -> Unit) {
+    KDoneMongoContainer.database = mongoDatabase
+
     install(DefaultHeaders)
     install(ForwardedHeaderSupport)
     install(CallLogging)
@@ -96,6 +100,11 @@ var Route.mongo: MongoDatabase? by Delegate(null)
 val Route.database: MongoDatabase get() = mongo ?: throw MisconfigurationException("Missing mongo db")
 var Route.jwtConfigDelegate: JWTConfig? by Delegate(null)
 val Route.jwtConfiguration: JWTConfig get() = jwtConfigDelegate ?: throw MisconfigurationException("Missing mongo db")
+
+val database: MongoDatabase get() = KDoneMongoContainer.database ?: throw MisconfigurationException("Missing mongo db")
+inline fun <reified T>mongoRepository(collectionName: String): MongoRepository<T> {
+    return MongoRepository(database, collectionName, T::class.java)
+}
 
 fun Route.authenticateJWT(optional: Boolean = false,
                           build: Route.() -> Unit) = authenticate("jwt", optional = optional, build = build)
