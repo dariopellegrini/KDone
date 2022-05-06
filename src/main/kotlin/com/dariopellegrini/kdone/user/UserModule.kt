@@ -413,6 +413,9 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                         if (it.containsKey("password")) throw ForbiddenException("Cannot change password")
                         checkInput(it["username"] as? String, it["role"] as? String)
                     }
+
+                    configuration.beforeUpdate?.invoke(call, id.mongoId(), patch.toMutableMap())
+
                     repository.updateOneById(id.mongoId(), patch)
                     call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).secure())
                     configuration.afterUpdate?.let {
@@ -422,6 +425,9 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     val patch = call.receiveMap<T>()
                     if (patch.containsKey("password")) throw ForbiddenException("Cannot change password")
                     checkInput(patch["username"] as? String, patch["role"] as? String)
+
+                    configuration.beforeUpdate?.invoke(call, id.mongoId(), patch.toMutableMap())
+
                     repository.updateOneById(id.mongoId(), patch)
                     call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).secure())
                     configuration.afterUpdate?.let {
