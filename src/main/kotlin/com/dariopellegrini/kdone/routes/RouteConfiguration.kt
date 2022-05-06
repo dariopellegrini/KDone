@@ -18,7 +18,7 @@ class RouteConfiguration<T: Any> {
     var beforeCreate: (suspend (ApplicationCall, T) -> Unit)? = null
     var afterCreate: (suspend (ApplicationCall, T) -> Unit)? = null
 
-    var beforeGet: (suspend (ApplicationCall, Map<String, Any>) -> Unit)? = null
+    var beforeGet: (suspend (ApplicationCall, MutableMap<String, Any>) -> Unit)? = null
     var afterGet: (suspend (ApplicationCall, Map<String, Any>, List<T>) -> Unit)? = null
 
     var beforeUpdate: (suspend (ApplicationCall, Id<T>, MutableMap<String, Any?>) -> Unit)? = null

@@ -80,6 +80,9 @@ inline fun <reified T : Any>Route.module(endpoint: String,
 
                 // Filters
                 val queryMap = mutableMapOf<String, Any>()
+
+                configuration.beforeGet?.let { it(call, queryMap) }
+
                 call.request.queryParameters.toMap()
                     .filter { it.key != queryParameter &&
                             it.key != limitParameter &&
@@ -120,9 +123,9 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                     query = bson.json
                 }
 
-                configuration.beforeGet?.let { it(call,
-                    call.request.queryParameters.toMap().map { it.key to it.value.first() }.toMap())
-                }
+//                configuration.beforeGet?.let { it(call,
+//                    call.request.queryParameters.toMap().map { it.key to it.value.first() }.toMap())
+//                }
 
                 val limit = call.parameters[limitParameter]?.toIntOrNull()
                 val skip = call.parameters[skipParameter]?.toIntOrNull()
