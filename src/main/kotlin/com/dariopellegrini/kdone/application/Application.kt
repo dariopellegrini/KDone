@@ -23,6 +23,7 @@ import io.ktor.util.pipeline.*
 import io.ktor.websocket.*
 import org.bson.Document
 import org.litote.kmongo.KMongo
+import org.litote.kmongo.getCollection
 
 fun Application.installKDone(mongoDatabase: MongoDatabase,
                              jwtConfig: JWTConfig,
@@ -105,6 +106,7 @@ val database: MongoDatabase get() = KDoneMongoContainer.database ?: throw Miscon
 inline fun <reified T>mongoRepository(collectionName: String): MongoRepository<T> {
     return MongoRepository(database, collectionName, T::class.java)
 }
+inline fun <reified T>mongoCollection(collectionName: String) = database.getCollection(collectionName, T::class.java)
 
 fun Route.authenticateJWT(optional: Boolean = false,
                           build: Route.() -> Unit) = authenticate("jwt", optional = optional, build = build)
