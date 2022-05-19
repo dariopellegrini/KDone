@@ -412,9 +412,9 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     val patch = call.receiveMultipartMap<T>(uploader) {
                         if (it.containsKey("password")) throw ForbiddenException("Cannot change password")
                         checkInput(it["username"] as? String, it["role"] as? String)
-                    }
+                    }.toMutableMap()
 
-                    configuration.beforeUpdate?.invoke(call, id.mongoId(), patch.toMutableMap())
+                    configuration.beforeUpdate?.invoke(call, id.mongoId(), patch)
 
                     repository.updateOneById(id.mongoId(), patch)
                     call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).secure())
@@ -422,11 +422,11 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                         it(call, patch, user)
                     }
                 } else {
-                    val patch = call.receiveMap<T>()
+                    val patch = call.receiveMap<T>().toMutableMap()
                     if (patch.containsKey("password")) throw ForbiddenException("Cannot change password")
                     checkInput(patch["username"] as? String, patch["role"] as? String)
 
-                    configuration.beforeUpdate?.invoke(call, id.mongoId(), patch.toMutableMap())
+                    configuration.beforeUpdate?.invoke(call, id.mongoId(), patch)
 
                     repository.updateOneById(id.mongoId(), patch)
                     call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).secure())
