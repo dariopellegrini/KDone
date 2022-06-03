@@ -72,6 +72,9 @@ open class UserRouteConfiguration<T: KDoneUser> {
     // Privacy
     var privacyParagraphs: List<PrivacyParagraph>? = null
 
+    // Lookup
+    var autolookup = false
+
     lateinit var repository: MongoRepository<T>
 
     fun authorizations(closure: UserAuthorization.() -> Unit) {

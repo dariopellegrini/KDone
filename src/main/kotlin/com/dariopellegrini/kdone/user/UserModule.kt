@@ -3,13 +3,11 @@ package com.dariopellegrini.kdone.user
 import auth.mongoId
 import auth.userAuth
 import auth.userAuthOrNull
+import com.dariopellegrini.kdone.annotations.Lookup
 import com.dariopellegrini.kdone.application.database
 import com.dariopellegrini.kdone.application.jwtConfiguration
 import com.dariopellegrini.kdone.auth.*
-import com.dariopellegrini.kdone.constants.passwordsRecoveryCollection
-import com.dariopellegrini.kdone.constants.queryParameter
-import com.dariopellegrini.kdone.constants.usersConfirmationsCollection
-import com.dariopellegrini.kdone.constants.usersTokensCollection
+import com.dariopellegrini.kdone.constants.*
 import com.dariopellegrini.kdone.email.EmailConfirmationConfiguration
 import com.dariopellegrini.kdone.email.model.UserConfirmation
 import com.dariopellegrini.kdone.exceptions.*
@@ -17,6 +15,7 @@ import com.dariopellegrini.kdone.extensions.*
 import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.model.SoftDeletable
 import com.dariopellegrini.kdone.mongo.MongoRepository
+import com.dariopellegrini.kdone.mongo.conditionalLookup
 import com.dariopellegrini.kdone.passwordrecovery.model.PasswordRecovery
 import com.dariopellegrini.kdone.privacy.privacyModule
 import com.dariopellegrini.kdone.user.model.*
@@ -26,7 +25,8 @@ import com.dariopellegrini.kdone.user.social.facebook.facebook
 import com.dariopellegrini.kdone.user.social.google.google
 import com.dariopellegrini.kdone.utils.HashUtils.sha512
 import com.dariopellegrini.kdone.utils.randomString
-import io.ktor.application.call
+import com.mongodb.client.model.UnwindOptions
+import io.ktor.application.*
 import io.ktor.auth.authenticate
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -47,6 +47,7 @@ import java.util.*
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.jvmErasure
+import kotlin.reflect.jvm.kotlinProperty
 
 inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                                                    collectionName: String? = null,
@@ -195,14 +196,14 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 call.request.queryParameters.toMap()
 //                    .filter { it.key != queryParameter }
                     .map { it.key to it.value.first() }.map { pair ->
-                    when {
-                        pair.second.toIntOrNull() != null -> queryMap[pair.first] = pair.second.toInt()
-                        pair.second.toDoubleOrNull() != null -> queryMap[pair.first] = pair.second.toDouble()
-                        pair.second == "true" -> queryMap[pair.first] = true
-                        pair.second == "false" -> queryMap[pair.first] = false
-                        else -> queryMap[pair.first] = pair.second
+                        when {
+                            pair.second.toIntOrNull() != null -> queryMap[pair.first] = pair.second.toInt()
+                            pair.second.toDoubleOrNull() != null -> queryMap[pair.first] = pair.second.toDouble()
+                            pair.second == "true" -> queryMap[pair.first] = true
+                            pair.second == "false" -> queryMap[pair.first] = false
+                            else -> queryMap[pair.first] = pair.second
+                        }
                     }
-                }
 
                 configuration.beforeGet?.let { it(call, queryMap) }
 
@@ -222,7 +223,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 //                    queryMap["softDeleted"] = false
 //                }
 
-                val users = when {
+                val bson = when {
                     userAuth?.role != null -> {
                         var bsonList: MutableList<Bson>? = null
                         if (configuration.authorization.check(userAuth.role, read, registered)) {
@@ -233,7 +234,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                             if (bsonList == null) bsonList = mutableListOf()
                             bsonList!!.add(KDoneUser::role eq it)
                         }
-                        bsonList?.let { repository.findAll(and(or(it), query.bson)) } ?: run { listOf<T>() }
+                        bsonList?.let { and(or(it), query.bson) } ?: run { null }
                     }
                     userAuth != null -> {
                         var bsonList: MutableList<Bson>? = null
@@ -245,7 +246,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                             if (bsonList == null) bsonList = mutableListOf()
                             bsonList!!.add(KDoneUser::role eq it)
                         }
-                        bsonList?.let { repository.findAll(and(or(it), query.bson)) } ?: run { listOf<T>() }
+                        bsonList?.let { and(or(it), query.bson) } ?: run { null }
                     }
                     else -> {
                         var bsonList: MutableList<Bson>? = null
@@ -257,8 +258,32 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                             if (bsonList == null) bsonList = mutableListOf()
                             bsonList!!.add(KDoneUser::role eq it)
                         }
-                        bsonList?.let { repository.findAll(and(or(it), query.bson)) } ?: run { listOf<T>() }
+                        bsonList?.let { and(or(it), query.bson) } ?: run { null }
                     }
+                }
+
+                val users = when {
+                    configuration.autolookup ||
+                            call.request.queryParameters[lookupParameter] == "true" -> {
+                        val aggregateList = if (bson != null) mutableListOf(match(bson)) else mutableListOf()
+                        T::class.java.declaredFields.forEach { field ->
+                            field.isAccessible = true
+                            if (field.isAnnotationPresent(Lookup::class.java)) {
+                                val annotation = field.getAnnotation(Lookup::class.java)
+                                aggregateList += lookup(annotation.collectionName, annotation.parameter, annotation.foreignParameter, field.name)
+                                val classifier = field.kotlinProperty?.returnType?.classifier
+                                if (classifier != List::class &&
+                                    classifier != Array::class &&
+                                    classifier != Set::class) {
+                                    val options = UnwindOptions()
+                                    options.preserveNullAndEmptyArrays(true)
+                                    aggregateList += unwind("\$${field.name}", options)
+                                }
+                            }
+                        }
+                        repository.aggregateBsonList(aggregateList)
+                    }
+                    else -> if (bson != null) repository.findAll(bson) else repository.findAll()
                 }
 
                 call.respond(HttpStatusCode.OK,
@@ -525,7 +550,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 }
 
                 (patch["role"] as? String)?.let {
-                    newRole ->
+                        newRole ->
 
                     when {
                         // Role
