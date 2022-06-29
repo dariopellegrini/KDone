@@ -1,3 +1,3 @@
 package com.dariopellegrini.kdone.model
 
-data class ResourceFile(val url: String, val mimeType: String)
+open class ResourceFile(open val url: String, open val mimeType: String)
