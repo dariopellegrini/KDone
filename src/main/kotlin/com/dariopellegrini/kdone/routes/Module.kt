@@ -569,6 +569,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
         }
 
         if (configuration.optionsEnabled) {
+            
             options(endpoint) {
                 try {
                     call.checkToken(this@authenticate.database)
