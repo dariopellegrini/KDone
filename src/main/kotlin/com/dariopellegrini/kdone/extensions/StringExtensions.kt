@@ -22,7 +22,7 @@ val String.isEmailValid: Boolean
 val String.date: Date
     get() {
         val tz = TimeZone.getTimeZone("UTC")
-        val df = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'")
+        val df = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
         df.timeZone = tz
         return df.parse(this)
     }
@@ -31,7 +31,7 @@ val String.dateOrNull: Date?
     get() {
         return try {
             val tz = TimeZone.getTimeZone("UTC")
-            val df = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'")
+            val df = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
             df.timeZone = tz
             return df.parse(this)
         } catch (e: Exception) {
