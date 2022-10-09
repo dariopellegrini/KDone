@@ -18,7 +18,7 @@ import com.dariopellegrini.kdone.user.social.facebook.FacebookConfiguration
 import com.dariopellegrini.kdone.user.social.google.GoogleConfiguration
 import com.dariopellegrini.kdone.utils.randomString
 import com.mongodb.client.result.DeleteResult
-import io.ktor.application.ApplicationCall
+import io.ktor.server.application.ApplicationCall
 import org.litote.kmongo.Id
 
 open class UserRouteConfiguration<T: KDoneUser> {

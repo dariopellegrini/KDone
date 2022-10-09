@@ -7,7 +7,7 @@ import com.dariopellegrini.kdone.uploader.S3Uploader
 import com.dariopellegrini.kdone.uploader.Uploader
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
-import io.ktor.application.ApplicationCall
+import io.ktor.server.application.ApplicationCall
 import org.litote.kmongo.Id
 import java.io.File
 

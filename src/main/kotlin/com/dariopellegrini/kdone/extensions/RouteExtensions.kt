@@ -2,12 +2,12 @@ package com.dariopellegrini.kdone.extensions
 
 import com.dariopellegrini.kdone.exceptions.BadRequestException
 import com.dariopellegrini.kdone.uploader.LocalUploader
-import io.ktor.application.call
+import io.ktor.server.application.call
 import io.ktor.http.HttpStatusCode
-import io.ktor.response.respond
-import io.ktor.response.respondFile
-import io.ktor.routing.Route
-import io.ktor.routing.get
+import  io.ktor.server.response.respond
+import  io.ktor.server.response.respondFile
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
 import java.io.File
 
 fun Route.localUploader(filesFolder: String): LocalUploader {

@@ -6,7 +6,7 @@ import com.dariopellegrini.kdone.constants.usersTokensCollection
 import com.dariopellegrini.kdone.exceptions.NotAuthorizedException
 import com.dariopellegrini.kdone.user.model.UserToken
 import com.mongodb.client.MongoDatabase
-import io.ktor.application.ApplicationCall
+import io.ktor.server.application.ApplicationCall
 import org.litote.kmongo.and
 import org.litote.kmongo.eq
 

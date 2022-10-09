@@ -1,6 +1,6 @@
 package com.dariopellegrini.kdone.auth
 
-import io.ktor.auth.Principal
+import io.ktor.server.auth.Principal
 
 data class UserAuth(
         val userId: String,

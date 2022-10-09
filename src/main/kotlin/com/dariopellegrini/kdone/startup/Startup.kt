@@ -2,20 +2,17 @@ package com.dariopellegrini.kdone.startup
 
 import com.dariopellegrini.kdone.application.installKDone
 import com.dariopellegrini.kdone.auth.JWTConfig
-import com.mongodb.ConnectionString
-import com.mongodb.MongoClientSettings
 import com.mongodb.client.MongoDatabase
-import com.mongodb.connection.SslSettings
-import io.ktor.features.*
-import io.ktor.routing.Route
+import io.ktor.server.routing.Route
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.server.plugins.cors.*
 import org.litote.kmongo.KMongo
 
 fun startKDone(port: Int,
                mongoURL: String,
                jwtConfig: JWTConfig,
-               corsConfig: (CORS.Configuration.() -> Unit)? = null,
+               corsConfig: (CORSConfig.() -> Unit)? = null,
                closure: Route.() -> Unit) {
     embeddedServer(Netty, port) {
         installKDone(mongoURL, jwtConfig, corsConfig, closure)
@@ -26,7 +23,7 @@ fun startKDone(port: Int,
 fun startKDone(port: Int,
                mongoDatabase: MongoDatabase,
                jwtConfig: JWTConfig,
-               corsConfig: (CORS.Configuration.() -> Unit)? = null,
+               corsConfig: (CORSConfig.() -> Unit)? = null,
                closure: Route.() -> Unit) {
     embeddedServer(Netty, port) {
         installKDone(mongoDatabase, jwtConfig, corsConfig, closure)
@@ -38,7 +35,7 @@ fun startKDone(port: Int,
                mongoURL: String,
                databaseName: String,
                jwtConfig: JWTConfig,
-               corsConfig: (CORS.Configuration.() -> Unit)? = null,
+               corsConfig: (CORSConfig.() -> Unit)? = null,
                closure: Route.() -> Unit) {
     embeddedServer(Netty, port) {
 //        val settings = MongoClientSettings.builder()

@@ -2,8 +2,8 @@ package auth
 
 import com.dariopellegrini.kdone.auth.UserAuth
 import com.dariopellegrini.kdone.exceptions.*
-import io.ktor.application.ApplicationCall
-import io.ktor.auth.authentication
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.auth.authentication
 import org.bson.types.ObjectId
 import org.litote.kmongo.Id
 import org.litote.kmongo.id.toId

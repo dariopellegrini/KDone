@@ -8,15 +8,15 @@ import com.dariopellegrini.kdone.exceptions.MissingPrivacyException
 import com.dariopellegrini.kdone.exceptions.NotFoundException
 import com.dariopellegrini.kdone.extensions.respondWithException
 import com.dariopellegrini.kdone.privacy.model.*
-import io.ktor.application.call
-import io.ktor.auth.authenticate
+import io.ktor.server.application.call 
+import io.ktor.server.auth.authenticate
 import io.ktor.http.HttpStatusCode
-import io.ktor.request.receive
-import io.ktor.response.respond
-import io.ktor.routing.Route
-import io.ktor.routing.get
-import io.ktor.routing.patch
-import io.ktor.routing.post
+import io.ktor.server.request.receive
+import  io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.patch
+import io.ktor.server.routing.post
 import org.litote.kmongo.eq
 
 fun Route.privacyModule(paragraphs: List<PrivacyParagraph>) {

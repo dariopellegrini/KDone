@@ -1,6 +1,5 @@
 package com.dariopellegrini.kdone.auth
-
-import io.ktor.auth.jwt.JWTCredential
+import io.ktor.server.auth.jwt.JWTCredential
 
 interface Validator {
     fun validate(credentials: JWTCredential): UserAuth?

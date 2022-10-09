@@ -5,12 +5,10 @@ import com.dariopellegrini.kdone.application.database
 import com.dariopellegrini.kdone.auth.*
 import com.dariopellegrini.kdone.exceptions.NotAuthorizedException
 import com.dariopellegrini.kdone.mongo.MongoRepository
-import io.ktor.application.*
-import io.ktor.auth.*
-import io.ktor.http.cio.websocket.*
-import io.ktor.routing.*
+import io.ktor.server.auth.*
+import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
 import io.ktor.websocket.*
-import org.apache.http.impl.auth.BasicScheme.authenticate
 import org.litote.kmongo.json
 import java.util.*
 import kotlin.collections.LinkedHashSet

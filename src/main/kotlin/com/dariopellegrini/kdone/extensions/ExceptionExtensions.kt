@@ -5,11 +5,13 @@ import com.auth0.jwt.exceptions.TokenExpiredException
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.dariopellegrini.kdone.exceptions.*
+import com.dariopellegrini.kdone.exceptions.BadRequestException
+import com.dariopellegrini.kdone.exceptions.NotFoundException
 import com.mongodb.MongoWriteException
-import io.ktor.application.ApplicationCall
-import io.ktor.features.UnsupportedMediaTypeException
+import io.ktor.server.application.ApplicationCall
 import io.ktor.http.HttpStatusCode
-import io.ktor.response.respond
+import io.ktor.server.plugins.*
+import  io.ktor.server.response.respond
 import io.ktor.utils.io.errors.IOException
 import org.bson.json.JsonParseException
 import java.lang.IllegalArgumentException

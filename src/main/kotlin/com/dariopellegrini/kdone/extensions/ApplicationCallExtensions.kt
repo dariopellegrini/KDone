@@ -7,11 +7,11 @@ import com.dariopellegrini.kdone.uploader.Uploader
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
-import io.ktor.application.ApplicationCall
+import io.ktor.server.application.ApplicationCall
 import io.ktor.http.content.PartData
 import io.ktor.http.content.readAllParts
-import io.ktor.request.receive
-import io.ktor.request.receiveMultipart
+import io.ktor.server.request.receive
+import io.ktor.server.request.receiveMultipart
 import kotlinx.coroutines.*
 import org.bson.types.ObjectId
 import org.json.simple.JSONObject

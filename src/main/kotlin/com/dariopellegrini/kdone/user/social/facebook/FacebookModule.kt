@@ -13,17 +13,17 @@ import com.dariopellegrini.kdone.user.model.UsernameInput
 import com.dariopellegrini.kdone.utilities.NetworkUtilities
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import io.ktor.application.call
-import io.ktor.auth.authenticate
+import io.ktor.server.application.call
+import io.ktor.server.auth.authenticate
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.request.isMultipart
-import io.ktor.request.receive
-import io.ktor.request.receiveMultipart
-import io.ktor.response.header
-import io.ktor.response.respond
-import io.ktor.routing.Route
-import io.ktor.routing.post
+import io.ktor.server.request.isMultipart
+import io.ktor.server.request.receive
+import io.ktor.server.request.receiveMultipart
+import  io.ktor.server.response.header
+import  io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.post
 import org.litote.kmongo.eq
 import java.util.*
 
