@@ -11,7 +11,7 @@ plugins {
 }
 
 group 'com.dariopellegrini'
-version '0.30.0'
+version '0.30.3'
 
 repositories {
     jcenter()
@@ -31,6 +31,7 @@ dependencies {
     api "io.ktor:ktor-server-forwarded-header:$ktor_version"
     api "io.ktor:ktor-server-call-logging:$ktor_version"
     api "io.ktor:ktor-server-auth-jwt:$ktor_version"
+    api "io.ktor:ktor-server-double-receive:$ktor_version"
 
     // Kotlin reflection
     api "org.jetbrains.kotlin:kotlin-reflect"
@@ -57,8 +58,8 @@ dependencies {
     api 'com.google.api-client:google-api-client:1.30.5'
 
     // Logs
-    api 'org.slf4j:slf4j-api:1.7.25'
-    api 'org.slf4j:slf4j-simple:1.6.1'
+    api 'org.slf4j:slf4j-api:2.0.3'
+    api 'org.slf4j:slf4j-simple:2.0.3'
 
     // Client E-mail
     implementation "org.simplejavamail:simple-java-mail:6.0.0-rc2"

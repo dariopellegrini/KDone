@@ -1,5 +1,6 @@
 package com.dariopellegrini.kdone.application
 
+import com.dariopellegrini.kdone.*
 import com.dariopellegrini.kdone.auth.JWTValidator
 import com.dariopellegrini.kdone.auth.JWTConfig
 import com.dariopellegrini.kdone.delegates.Delegate
@@ -9,29 +10,20 @@ import com.dariopellegrini.kdone.mongo.KDoneMongoContainer
 import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*import io.ktor.server.auth.jwt.jwt
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpMethod
 import io.ktor.serialization.jackson.*
-import io.ktor.server.auth.jwt.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.*
-import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.plugins.cors.routing.CORS
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.Routing
-import io.ktor.server.routing.routing
-import io.ktor.server.routing.*
-import io.ktor.util.pipeline.*
-import io.ktor.websocket.*
 import org.bson.Document
 import org.litote.kmongo.KMongo
 import io.ktor.server.plugins.defaultheaders.*
 import io.ktor.server.plugins.forwardedheaders.*
+import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
-
 fun Application.installKDone(mongoDatabase: MongoDatabase,
                              jwtConfig: JWTConfig,
                              corsConfig: (CORSConfig.() -> Unit)? = null,
