@@ -19,12 +19,14 @@ import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import org.litote.kmongo.eq
 
-fun Route.privacyModule(paragraphs: List<PrivacyParagraph>) {
+fun Route.privacyModule(prefix: String? = null, paragraphs: List<PrivacyParagraph>) {
 
     val repository = mongoRepository<UserPrivacy>("users_privacy")
 
+    val currentPrefix = prefix?.let { "$it/" } ?: ""
+
     authenticate("jwt") {
-        get("privacy/contents") {
+        get("${currentPrefix}privacy/content") {
             try {
                 call.respond(HttpStatusCode.OK, paragraphs)
             } catch (e: Exception) {
@@ -32,7 +34,15 @@ fun Route.privacyModule(paragraphs: List<PrivacyParagraph>) {
             }
         }
 
-        post("privacy/me") {
+        get("${currentPrefix}privacy/contents") {
+            try {
+                call.respond(HttpStatusCode.OK, paragraphs)
+            } catch (e: Exception) {
+                call.respondWithException(e)
+            }
+        }
+
+        post("${currentPrefix}privacy/me") {
             try {
                 val userId = call.userAuth.userId
                 val input = call.receive<PrivacyPreferencesInput>()
@@ -74,7 +84,7 @@ fun Route.privacyModule(paragraphs: List<PrivacyParagraph>) {
             }
         }
 
-        get("privacy/me/filled") {
+        get("${currentPrefix}privacy/me/filled") {
             try {
                 val userId = call.userAuth.userId
                 val count = repository.count(UserPrivacy::userId eq userId.mongoId())
@@ -85,7 +95,7 @@ fun Route.privacyModule(paragraphs: List<PrivacyParagraph>) {
             }
         }
 
-        get("privacy/me") {
+        get("${currentPrefix}privacy/me") {
             try {
                 val userId = call.userAuth.userId
                 val userPrivacy = repository.findOneOrNull(UserPrivacy::userId eq userId.mongoId()) ?: throw NotFoundException("Privacy not found for this user")
@@ -99,7 +109,7 @@ fun Route.privacyModule(paragraphs: List<PrivacyParagraph>) {
             }
         }
 
-        patch("privacy/me") {
+        patch("${currentPrefix}privacy/me") {
             try {
                 val userId = call.userAuth.userId
                 val input = call.receive<PrivacyPreferencesInput>()

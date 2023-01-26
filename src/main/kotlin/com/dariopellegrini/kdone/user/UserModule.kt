@@ -761,7 +761,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
     // Privacy
     configuration.privacyParagraphs?.let {
-        privacyModule(it)
+        privacyModule(configuration.privacyPrefix, it)
     }
 }
 

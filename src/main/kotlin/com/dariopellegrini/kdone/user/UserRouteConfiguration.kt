@@ -70,6 +70,7 @@ open class UserRouteConfiguration<T: KDoneUser> {
     var otpCodeGenerator: (() -> String)? = null
 
     // Privacy
+    var privacyPrefix: String? = null
     var privacyParagraphs: List<PrivacyParagraph>? = null
 
     // Lookup
@@ -187,6 +188,11 @@ open class UserRouteConfiguration<T: KDoneUser> {
     }
 
     fun privacy(vararg paragraphs: PrivacyParagraph) {
+        this.privacyParagraphs = paragraphs.toList()
+    }
+
+    fun privacy(prefix: String?, vararg paragraphs: PrivacyParagraph) {
+        this.privacyPrefix = prefix
         this.privacyParagraphs = paragraphs.toList()
     }
 }
