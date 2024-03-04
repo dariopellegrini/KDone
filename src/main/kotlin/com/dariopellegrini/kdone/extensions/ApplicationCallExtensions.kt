@@ -57,6 +57,9 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMap(): Map<String, Any
 //                resultMap[key] = value.toList()
             }
             property.returnType.jvmErasure.isSubclassOf(Id::class) && value is String && ObjectId.isValid(value) -> resultMap[key] = value.mongoId<Any>()
+            property.returnType.jvmErasure.isSubclassOf(Date::class) && value is String -> {
+                resultMap[key] = value.date
+            }
             property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
             else -> throw IOException("$key is not instance of ${property.returnType}")
         }
