@@ -46,6 +46,8 @@ class RouteConfiguration<T: Any> {
 
     var useObjectsForArrays = false
 
+    var shouldDeleteFiles = false
+
     fun authorizations(closure: Authorization.() -> Unit) {
         val authorization = Authorization()
         authorization.closure()

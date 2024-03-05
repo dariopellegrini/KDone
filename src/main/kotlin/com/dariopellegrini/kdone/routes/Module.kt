@@ -523,7 +523,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 }
 
                 // Deleting files
-                val urls: List<String>? = if (configuration.uploader != null) {
+                val urls: List<String>? = if (configuration.uploader != null && configuration.shouldDeleteFiles) {
                     val resources = T::class.declaredMemberProperties.filter { it.returnType.jvmErasure.isSubclassOf(ResourceFile::class) }
                     val element = repository.findById(id.mongoId())
 
