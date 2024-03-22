@@ -60,6 +60,9 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMap(): Map<String, Any
             property.returnType.jvmErasure.isSubclassOf(Date::class) && value is String -> {
                 resultMap[key] = value.date
             }
+            property.returnType.jvmErasure.isSubclassOf(Double::class) && value is Int -> {
+                resultMap[key] = value.toDouble()
+            }
             property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
             else -> throw IOException("$key is not instance of ${property.returnType}")
         }
