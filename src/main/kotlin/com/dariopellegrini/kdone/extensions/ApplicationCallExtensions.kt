@@ -63,6 +63,12 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMap(): Map<String, Any
             property.returnType.jvmErasure.isSubclassOf(Double::class) && value is Int -> {
                 resultMap[key] = value.toDouble()
             }
+            property.returnType.jvmErasure.java.isEnum -> {
+                println(value)
+                val enumValue = property.returnType.jvmErasure.java.enumConstants.firstOrNull { (it as Enum<*>).name == value }
+                    ?: throw IOException("Invalid enum value for $key: $value")
+                resultMap[key] = enumValue
+            }
             property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
             else -> throw IOException("$key is not instance of ${property.returnType}")
         }
@@ -97,6 +103,10 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMultipartMap(
             propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Boolean::class) == true && it.value == "true" -> true
             propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Boolean::class) == true && it.value == "false" -> false
             propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Date::class) == true && it.value.dateOrNull != null -> it.value.date
+            propertiesMap[it.name]?.returnType?.jvmErasure?.isSubclassOf(Enum::class) == true -> {
+                val enumType = propertiesMap[it.name]!!.returnType.jvmErasure as KClass<out Enum<*>>
+                enumType.java.enumConstants.first { enumConstant -> enumConstant.name == it.value }
+            }
             else -> it.value
         }
     }.toMap().toMutableMap()
@@ -134,6 +144,12 @@ suspend inline fun <reified T: Any>ApplicationCall.receiveMultipartMap(
                     resultMap[key] = ObjectMapper().configureForKDone().readValue(value, property.returnType.jvmErasure.java)
                 }
                 property.returnType.jvmErasure.isSubclassOf(Id::class) && value is String && ObjectId.isValid(value) -> resultMap[key] = value.mongoId<Any>()
+                property.returnType.jvmErasure.java.isEnum -> {
+                    println(value)
+                    val enumValue = property.returnType.jvmErasure.java.enumConstants.firstOrNull { (it as Enum<*>).name == value }
+                        ?: throw IOException("Invalid enum value for $key: $value")
+                    resultMap[key] = enumValue
+                }
                 property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
                 else -> throw IOException("$key is not instance of ${property.returnType}")
             }
