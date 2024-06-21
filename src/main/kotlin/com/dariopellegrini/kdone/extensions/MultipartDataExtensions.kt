@@ -8,6 +8,7 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
 import io.ktor.http.content.readAllParts
+import io.ktor.utils.io.errors.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.primaryConstructor
@@ -38,6 +39,12 @@ suspend inline fun <reified T: Any>MultiPartData.receive(
                     (value.trimStart().startsWith("{") && value.trimEnd().endsWith("}") ||
                     value.trimStart().startsWith("[") && value.trimEnd().endsWith("]")) -> {
                 resultMap[it.name!!] = ObjectMapper().configureForKDone().readTree(value)
+            }
+            it.type.jvmErasure.java.isEnum -> {
+                val enumValue = it.type.jvmErasure.java.enumConstants.firstOrNull { enumConst ->
+                    (enumConst as Enum<*>).name == value
+                } ?: throw IOException("Invalid enum value for ${it.name}: $value")
+                resultMap[it.name!!] = enumValue
             }
         }
     }
@@ -94,6 +101,12 @@ suspend fun <T: Any>MultiPartData.receive(
                     (value.trimStart().startsWith("{") && value.trimEnd().endsWith("}") ||
                             value.trimStart().startsWith("[") && value.trimEnd().endsWith("]")) -> {
                 resultMap[it.name!!] = ObjectMapper().configureForKDone().readTree(value)
+            }
+            it.type.jvmErasure.java.isEnum -> {
+                val enumValue = it.type.jvmErasure.java.enumConstants.firstOrNull { enumConst ->
+                    (enumConst as Enum<*>).name == value
+                } ?: throw IOException("Invalid enum value for ${it.name}: $value")
+                resultMap[it.name!!] = enumValue
             }
         }
     }
