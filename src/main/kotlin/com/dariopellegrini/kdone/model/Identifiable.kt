@@ -5,6 +5,6 @@ import org.litote.kmongo.Id
 import org.litote.kmongo.newId
 
 abstract class Identifiable {
-    val _id: Id<Any> = newId()
-    var owner: Id<KDoneUser>? = null
+    open val _id: Id<Any> = newId()
+    open var owner: Id<KDoneUser>? = null
 }

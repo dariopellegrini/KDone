@@ -57,6 +57,8 @@ dependencies {
     // Google SDK
     api 'com.google.api-client:google-api-client:1.30.5'
 
+    api 'com.google.oauth-client:google-oauth-client:1.33.3'
+
     // Logs
     api 'org.slf4j:slf4j-api:2.0.3'
     api 'org.slf4j:slf4j-simple:2.0.3'

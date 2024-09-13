@@ -13,19 +13,16 @@ import com.dariopellegrini.kdone.user.model.KDoneUser
 import com.dariopellegrini.kdone.user.model.UserToken
 import com.dariopellegrini.kdone.user.model.UsernameInput
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
-import io.ktor.server.application.call 
-import io.ktor.server.auth.authenticate
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.isMultipart
-import io.ktor.server.request.receive
-import io.ktor.server.request.receiveMultipart
-import  io.ktor.server.response.header
-import  io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.post
+import io.ktor.http.*
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.litote.kmongo.eq
@@ -131,7 +128,7 @@ suspend fun checkGoogleToken(clientId: String,
     val tokenResponse = GoogleAuthorizationCodeTokenRequest(
         NetHttpTransport(),
         JacksonFactory.getDefaultInstance(),
-        "https://oauth2.googleapis.com/token",
+        "https://accounts.google.com/o/oauth2/token",
         clientId,
         clientSecret,
         googleToken,
@@ -143,4 +140,45 @@ suspend fun checkGoogleToken(clientId: String,
     val userId = payload.subject
 
     if (userId != googleId) throw ForbiddenException()
+}
+
+suspend fun checkGoogle(clientId: String,
+                        clientSecret: String,
+                        redirectURL: String,
+                        googleToken: String,
+                        googleId: String) {
+    val verifier = GoogleIdTokenVerifier.Builder(
+        NetHttpTransport(),
+        JacksonFactory.getDefaultInstance()
+    ) // Specify the CLIENT_ID of the app that accesses the backend:
+        .setAudience(Collections.singletonList(clientId)) // Or, if multiple clients access the backend:
+        //.setAudience(Arrays.asList(CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3))
+        .build()
+
+// (Receive idTokenString by HTTPS POST)
+
+
+// (Receive idTokenString by HTTPS POST)
+    val idToken: GoogleIdToken = verifier.verify(googleToken)
+    if (idToken != null) {
+        val payload: GoogleIdToken.Payload = idToken.payload
+
+        // Print user identifier
+        val userId: String = payload.getSubject()
+        println("User ID: $userId")
+
+        // Get profile information from payload
+        val email: String = payload.getEmail()
+        val emailVerified: Boolean = java.lang.Boolean.valueOf(payload.getEmailVerified())
+        val name = payload.get("name")
+        val pictureUrl = payload.get("picture")
+        val locale = payload.get("locale")
+        val familyName = payload.get("family_name")
+        val givenName = payload.get("given_name")
+
+        // Use or store profile information
+        // ...
+    } else {
+        println("Invalid ID token.")
+    }
 }
