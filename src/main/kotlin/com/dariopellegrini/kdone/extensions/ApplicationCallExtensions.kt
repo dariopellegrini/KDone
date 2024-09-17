@@ -320,6 +320,7 @@ suspend fun <T: Any>ApplicationCall.receiveMultipartMap(
                         ?: throw IOException("Invalid enum value for $key: $value")
                     resultMap[key] = enumValue
                 }
+
                 property.returnType.jvmErasure.isSubclassOf(value::class) -> resultMap[key] = value
                 else -> throw IOException("$key is not instance of ${property.returnType}")
             }
