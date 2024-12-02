@@ -12,13 +12,11 @@ class Localized<T: Any>: HashMap<String, T>() {
     fun localize(countryCode: String) = get(countryCode)
 }
 
-class Localization<T: Any>(val elements: List<LocalizationElement<T>>) {
-    fun get(key: String): T? {
-        return elements.firstOrNull { it.key == key }?.value
-    }
+class Localization<T: Any>: ArrayList<LocalizationElement<T>>() {
+    fun get(countryCode: String) = firstOrNull { it.language == countryCode }?.value
 }
 
-data class LocalizationElement<T: Any>(val key: String, val value: T)
+data class LocalizationElement<T: Any>(val language: String, val value: T)
 
 @Suppress("UNCHECKED_CAST")
 fun Any.localize(countryCode: String?, defaultCountryCode: String = "en"): Any {

@@ -387,15 +387,21 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 }
 
                 val dtoRead = configuration.dtoConfiguration?.readDTO(call.userAuthOrNull, element)
-                if (dtoRead != null) {
+                val responseElement = if (dtoRead != null) {
                     val dtoElement = when {
                         dtoRead.init != null -> dtoRead.init.invoke(element)
                         dtoRead.closure != null -> element.transfer(T::class, dtoRead.kClass, dtoRead.closure)
                         else -> element.transfer(T::class, dtoRead.kClass)
                     }
-                    call.respond(HttpStatusCode.Created, dtoElement)
+                    dtoElement
                 } else {
-                    call.respond(HttpStatusCode.Created, element)
+                    element
+                }
+
+                if (call.language != null) {
+                    call.respond(HttpStatusCode.OK, responseElement.localize(call.language!!, configuration.defaultLanguage))
+                } else {
+                    call.respond(HttpStatusCode.OK, responseElement)
                 }
 
                 configuration.afterCreate?.let { it(call, element) }
@@ -482,15 +488,21 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 }
 
                 val dtoRead = configuration.dtoConfiguration?.readDTO(call.userAuthOrNull, updatedElement)
-                if (dtoRead != null) {
+                val responseElement = if (dtoRead != null) {
                     val dtoElement = when {
                         dtoRead.init != null -> dtoRead.init.invoke(updatedElement)
                         dtoRead.closure != null -> updatedElement.transfer(T::class, dtoRead.kClass, dtoRead.closure)
                         else -> updatedElement.transfer(T::class, dtoRead.kClass)
                     }
-                    call.respond(HttpStatusCode.OK, dtoElement)
+                    dtoElement
                 } else {
-                    call.respond(HttpStatusCode.OK, updatedElement)
+                    updatedElement
+                }
+
+                if (call.language != null) {
+                    call.respond(HttpStatusCode.OK, responseElement.localize(call.language!!, configuration.defaultLanguage))
+                } else {
+                    call.respond(HttpStatusCode.OK, responseElement)
                 }
 
                 configuration.afterUpdate?.let {
