@@ -15,10 +15,10 @@ class Localized<T: Any>: HashMap<String, T>() {
 }
 
 @Suppress("UNCHECKED_CAST")
-fun Any.localize(countryCode: String, defaultCountryCode: String): Any {
+fun Any.localize(countryCode: String?, defaultCountryCode: String = "en"): Any {
     val objectMapper = ObjectMapper().configureForKDone()
     val localizedModule = SimpleModule().apply {
-        addSerializer(Localized::class.java, LocalizedSerializer(countryCode))
+        addSerializer(Localized::class.java, LocalizedSerializer(countryCode ?: defaultCountryCode))
     }
     objectMapper.registerModule(localizedModule)
     return objectMapper.convertValue(this)
