@@ -213,8 +213,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                             responseElements.map {
                                 it.localize(
                                     call.language!!,
-                                    configuration.defaultLanguage
-                                )
+                                    configuration.defaultLanguage)
                             }
                         }
                     )

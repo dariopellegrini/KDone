@@ -14,6 +14,7 @@ import java.net.URLDecoder
 val ApplicationCall.userAuth: UserAuth
     get() = (authentication.principal as? UserAuth)?.copy() ?: throw NotAuthorizedException()
 
+
 val ApplicationCall.userAuthOrNull: UserAuth?
     get() = (authentication.principal as? UserAuth)?.copy()
 
