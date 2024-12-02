@@ -1,5 +1,6 @@
 package com.dariopellegrini.kdone.extensions
 
+import com.dariopellegrini.kdone.languages.Localization
 import com.dariopellegrini.kdone.languages.Localized
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParseException
@@ -43,6 +44,23 @@ class LocalizedSerializer(val language: String) : JsonSerializer<Localized<*>>()
         serializers: SerializerProvider
     ) {
         val languageValue = value[language]
+        if (languageValue != null) {
+            // Write the value for "en"
+            gen.writeObject(languageValue)
+        } else {
+            // Write the entire map
+            gen.writeObject(value)
+        }
+    }
+}
+
+class LocalizationSerializer(val language: String) : JsonSerializer<Localization<*>>() {
+    override fun serialize(
+        value: Localization<*>,
+        gen: JsonGenerator,
+        serializers: SerializerProvider
+    ) {
+        val languageValue = value.get(language)
         if (languageValue != null) {
             // Write the value for "en"
             gen.writeObject(languageValue)

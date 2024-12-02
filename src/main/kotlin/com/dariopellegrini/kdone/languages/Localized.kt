@@ -1,18 +1,24 @@
 package com.dariopellegrini.kdone.languages
 
+import com.dariopellegrini.kdone.extensions.LocalizationSerializer
 import com.dariopellegrini.kdone.extensions.LocalizedSerializer
 import com.dariopellegrini.kdone.extensions.configureForKDone
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.convertValue
-import kotlin.reflect.KProperty1
-import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.jvmErasure
 
+@Deprecated("Use Localization instead")
 class Localized<T: Any>: HashMap<String, T>() {
     fun localize(countryCode: String) = get(countryCode)
 }
+
+class Localization<T: Any>(val elements: List<LocalizationElement<T>>) {
+    fun get(key: String): T? {
+        return elements.firstOrNull { it.key == key }?.value
+    }
+}
+
+data class LocalizationElement<T: Any>(val key: String, val value: T)
 
 @Suppress("UNCHECKED_CAST")
 fun Any.localize(countryCode: String?, defaultCountryCode: String = "en"): Any {
@@ -20,7 +26,11 @@ fun Any.localize(countryCode: String?, defaultCountryCode: String = "en"): Any {
     val localizedModule = SimpleModule().apply {
         addSerializer(Localized::class.java, LocalizedSerializer(countryCode ?: defaultCountryCode))
     }
+    val localizationModule = SimpleModule().apply {
+        addSerializer(Localization::class.java, LocalizationSerializer(countryCode ?: defaultCountryCode))
+    }
     objectMapper.registerModule(localizedModule)
+    objectMapper.registerModule(localizationModule)
     return objectMapper.convertValue(this)
 //    val klass = this::class
 //    val values = mutableMapOf<String, Any?>()
