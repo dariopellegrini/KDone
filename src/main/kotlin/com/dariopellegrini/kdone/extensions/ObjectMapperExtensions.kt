@@ -1,6 +1,7 @@
 package com.dariopellegrini.kdone.extensions
 
 import com.dariopellegrini.kdone.languages.Localization
+import com.dariopellegrini.kdone.languages.LocalizationElement
 import com.dariopellegrini.kdone.languages.Localized
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParseException
@@ -66,7 +67,8 @@ class LocalizationSerializer(val language: String) : JsonSerializer<Localization
             gen.writeObject(languageValue)
         } else {
             // Write the entire map
-            gen.writeObject(value)
+            val array = value.map { LocalizationElement(it.language, it.value) }
+            gen.writeObject(array)
         }
     }
 }
