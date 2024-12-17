@@ -76,6 +76,9 @@ open class UserRouteConfiguration<T: KDoneUser> {
     // Lookup
     var autolookup = false
 
+    // Languages
+    var defaultLanguage: String = "en"
+
     lateinit var repository: MongoRepository<T>
 
     fun authorizations(closure: UserAuthorization.() -> Unit) {

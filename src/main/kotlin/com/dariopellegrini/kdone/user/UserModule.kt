@@ -12,6 +12,7 @@ import com.dariopellegrini.kdone.email.EmailConfirmationConfiguration
 import com.dariopellegrini.kdone.email.model.UserConfirmation
 import com.dariopellegrini.kdone.exceptions.*
 import com.dariopellegrini.kdone.extensions.*
+import com.dariopellegrini.kdone.languages.localize
 import com.dariopellegrini.kdone.model.ResourceFile
 import com.dariopellegrini.kdone.model.SoftDeletable
 import com.dariopellegrini.kdone.mongo.MongoRepository
@@ -160,7 +161,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 }
 
                 repository.insert(input)
-                call.respond(input.secure())
+                call.respond(input.localize(call.language, configuration.defaultLanguage).secure())
 
                 configuration.afterCreate?.let { it(call, input) }
 
@@ -288,7 +289,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
                 call.respond(HttpStatusCode.OK,
                     if (configuration.useObjectsForArrays) {
-                        mapOf("results" to users.map { it.secure() })
+                        mapOf("results" to users.map { it.localize(call.language, configuration.defaultLanguage).secure() })
                     } else {
                         users.map { it.secure() }
                     }
@@ -334,7 +335,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
                 // Owner before everything
                 if (user._id.toString() == userAuth?.userId && configuration.authorization.checkOwner(read)) {
-                    call.respond(HttpStatusCode.OK, user.secure())
+                    call.respond(HttpStatusCode.OK, user.localize(call.language, configuration.defaultLanguage).secure())
                 } else {
                     when {
                         // Role
@@ -350,7 +351,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                             if (!configuration.authorization.check(guest, read, user.role ?: registered.rawValue)) throw ForbiddenException()
                         }
                     }
-                    call.respond(HttpStatusCode.OK, user.secure())
+                    call.respond(HttpStatusCode.OK, user.localize(call.language, configuration.defaultLanguage).secure())
                 }
             } catch (e: Exception) {
                 call.respondWithException(e)
@@ -369,7 +370,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
 
                 // Owner before everything
                 if (user._id.toString() == userAuth?.userId && configuration.authorization.checkOwner(delete)) {
-                    call.respond(HttpStatusCode.OK, user.secure())
+                    call.respond(HttpStatusCode.OK, user.localize(call.language, configuration.defaultLanguage).secure())
                 } else {
                     when {
                         // Role
@@ -466,7 +467,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     configuration.beforeUpdate?.invoke(call, id.mongoId(), patch)
 
                     repository.updateOneById(id.mongoId(), patch)
-                    call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).secure())
+                    call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).localize(call.language, configuration.defaultLanguage).secure())
                     configuration.afterUpdate?.let {
                         it(call, patch, user)
                     }
@@ -478,7 +479,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     configuration.beforeUpdate?.invoke(call, id.mongoId(), patch)
 
                     repository.updateOneById(id.mongoId(), patch)
-                    call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).secure())
+                    call.respond(HttpStatusCode.OK, repository.findById(id.mongoId()).localize(call.language, configuration.defaultLanguage).secure())
                     configuration.afterUpdate?.let {
                         it(call, patch, user)
                     }
@@ -508,8 +509,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                         KDoneUser::username eq input.username,
                         KDoneUser::password eq password),
                 repository,
-                configuration
-                ) ?: throw NotAuthorizedException()
+                configuration) ?: throw NotAuthorizedException()
             }
 
             if (configuration.needsEmailConfirmation == true && user.confirmed != true) {
@@ -520,7 +520,7 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             call.response.header(HttpHeaders.Authorization, token)
             tokenRepository.insert(UserToken(user._id, token, Date()))
 
-            call.respond(HttpStatusCode.OK, user.secure())
+            call.respond(HttpStatusCode.OK, user.localize(call.language, configuration.defaultLanguage).secure())
         } catch (e: Exception) {
             call.respondWithException(e)
             configuration.exceptionHandler?.invoke(call, e)
@@ -536,28 +536,13 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 val user = when {
                     configuration.autolookup ||
                             call.request.queryParameters[lookupParameter] == "true" -> {
-                        val aggregateList = mutableListOf(match(KDoneUser::_id eq id.mongoId()))
-                        T::class.java.declaredFields.forEach { field ->
-                            field.isAccessible = true
-                            if (field.isAnnotationPresent(Lookup::class.java)) {
-                                val annotation = field.getAnnotation(Lookup::class.java)
-                                aggregateList += lookup(annotation.collectionName, annotation.parameter, annotation.foreignParameter, field.name)
-                                val classifier = field.kotlinProperty?.returnType?.classifier
-                                if (classifier != List::class &&
-                                    classifier != Array::class &&
-                                    classifier != Set::class) {
-                                    val options = UnwindOptions()
-                                    options.preserveNullAndEmptyArrays(true)
-                                    aggregateList += unwind("\$${field.name}", options)
-                                }
-                            }
-                        }
+                        val aggregateList = mutableListOf(match(KDoneUser::_id eq id.mongoId())).aggregateLookupList<T>()
                         repository.aggregateBsonList(aggregateList).firstOrNull() ?: throw NotFoundException()
                     }
                     else -> repository.findById(id.mongoId())
                 }
 //                val user = repository.findById(call.userAuth.userId.mongoId())
-                call.respond(HttpStatusCode.OK, user.secure())
+                call.respond(HttpStatusCode.OK, user.localize(call.language, configuration.defaultLanguage))
             } catch (e: Exception) {
                 call.respondWithException(e)
                 configuration.exceptionHandler?.invoke(call, e)
@@ -613,7 +598,18 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                         }
                     }
                 }
-                call.respond(HttpStatusCode.OK, repository.updateOneById(call.userAuth.userId.mongoId(), patch))
+
+                val id = call.userAuth.userId
+                repository.updateOneById(id.mongoId(), patch)
+                val user = when {
+                    configuration.autolookup ||
+                            call.request.queryParameters[lookupParameter] == "true" -> {
+                        val aggregateList = mutableListOf(match(KDoneUser::_id eq id.mongoId())).aggregateLookupList<T>()
+                        repository.aggregateBsonList(aggregateList).firstOrNull() ?: throw NotFoundException()
+                    }
+                    else -> repository.findById(id.mongoId())
+                }
+                call.respond(HttpStatusCode.OK, user.localize(call.language, configuration.defaultLanguage).secure())
             } catch (e: Exception) {
                 call.respondWithException(e)
                 configuration.exceptionHandler?.invoke(call, e)
@@ -771,26 +767,31 @@ suspend inline fun <reified T : KDoneUser>ApplicationCall.findUserWithLookup(bso
     val user = when {
         configuration.autolookup ||
                 this.request.queryParameters[lookupParameter] == "true" -> {
-            val aggregateList = mutableListOf(match(bson))
-            T::class.java.declaredFields.forEach { field ->
-                field.isAccessible = true
-                if (field.isAnnotationPresent(Lookup::class.java)) {
-                    val annotation = field.getAnnotation(Lookup::class.java)
-                    aggregateList += lookup(annotation.collectionName, annotation.parameter, annotation.foreignParameter, field.name)
-                    val classifier = field.kotlinProperty?.returnType?.classifier
-                    if (classifier != List::class &&
-                        classifier != Array::class &&
-                        classifier != Set::class) {
-                        val options = UnwindOptions()
-                        options.preserveNullAndEmptyArrays(true)
-                        aggregateList += unwind("\$${field.name}", options)
-                    }
-                }
-            }
+            val aggregateList = mutableListOf(match(bson)).aggregateLookupList<T>()
             repository.aggregateBsonList(aggregateList).firstOrNull()
         }
         else -> repository.findAll(bson).firstOrNull()
     }
     return user
+}
+
+suspend inline fun <reified T : KDoneUser>List<Bson>.aggregateLookupList(): List<Bson> {
+    val aggregateList = this.toMutableList()
+    T::class.java.declaredFields.forEach { field ->
+        field.isAccessible = true
+        if (field.isAnnotationPresent(Lookup::class.java)) {
+            val annotation = field.getAnnotation(Lookup::class.java)
+            aggregateList += lookup(annotation.collectionName, annotation.parameter, annotation.foreignParameter, field.name)
+            val classifier = field.kotlinProperty?.returnType?.classifier
+            if (classifier != List::class &&
+                classifier != Array::class &&
+                classifier != Set::class) {
+                val options = UnwindOptions()
+                options.preserveNullAndEmptyArrays(true)
+                aggregateList += unwind("\$${field.name}", options)
+            }
+        }
+    }
+    return aggregateList
 }
 
