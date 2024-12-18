@@ -541,7 +541,6 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     }
                     else -> repository.findById(id.mongoId())
                 }
-//                val user = repository.findById(call.userAuth.userId.mongoId())
                 call.respond(HttpStatusCode.OK, user.localize(call.language, configuration.defaultLanguage))
             } catch (e: Exception) {
                 call.respondWithException(e)
