@@ -161,9 +161,17 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                 }
 
                 repository.insert(input)
-                call.respond(input.localize(call.language, configuration.defaultLanguage).secure())
 
-                configuration.afterCreate?.let { it(call, input) }
+                val user = if (configuration.autolookup || call.request.queryParameters[lookupParameter] == "true") {
+                    val aggregateList = mutableListOf(match(KDoneUser::_id eq input._id)).aggregateLookupList<T>()
+                    repository.aggregateBsonList(aggregateList).firstOrNull() ?: throw NotFoundException()
+                } else {
+                    input
+                }
+
+                call.respond(user.localize(call.language, configuration.defaultLanguage).secure())
+
+                configuration.afterCreate?.let { it(call, user) }
 
                 if (emailConfirmationConfiguration != null) {
                     val code = randomString(32)
