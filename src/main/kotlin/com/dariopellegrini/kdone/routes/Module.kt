@@ -88,7 +88,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                             it.key != skipParameter &&
                             it.key != lookupParameter &&
                             it.key != sortParameter &&
-                            it.key != descendingParameter
+                            it.key != descendParameter
                     }
                     .map { it.key to it.value.first() }.map { pair ->
                         when {
@@ -132,7 +132,7 @@ inline fun <reified T : Any>Route.module(endpoint: String,
                 val limit = call.parameters[limitParameter]?.toIntOrNull()
                 val skip = call.parameters[skipParameter]?.toIntOrNull()
                 val sortParameter = call.parameters[sortParameter]
-                val sortDescending = call.parameters[descendingParameter] != "true"
+                val sortDescending = call.parameters[descendParameter] == "true"
 
                 val elements = when {
                     configuration.autolookup ||
