@@ -181,8 +181,7 @@ open class UserRouteConfiguration<T: KDoneUser> {
                 sender,
                 baseURL,
                 redirectURL,
-                emailSenderClosure
-            )
+                emailSenderClosure)
     }
 
     fun otp(vararg senders: UserSender<T>, codeGenerator: (() -> String)? = null) {
