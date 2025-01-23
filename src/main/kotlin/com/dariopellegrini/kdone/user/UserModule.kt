@@ -733,9 +733,10 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
             repository.updateOne(KDoneUser::_id eq passwordRecovery.userId, mapOf("password" to passwordRecovery.newPassword))
             passwordRecoveryRepository.updateOne(PasswordRecovery::code eq code,
                 mapOf("active" to false, "dateUpdated" to Date()))
-            if (emailConfirmationConfiguration?.redirectURL != null) {
-                call.respondRedirect(emailConfirmationConfiguration.redirectURL, true)
-            } else {
+
+            configuration.passwordRecoveryConfiguration?.redirectURL?.let {
+                call.respondRedirect(it, true)
+            } ?: run {
                 call.respond(HttpStatusCode.OK, mapOf("result" to "Password changed successful"))
             }
         } catch (e: Exception) {
