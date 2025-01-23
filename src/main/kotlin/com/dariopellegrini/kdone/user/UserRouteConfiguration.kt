@@ -4,6 +4,7 @@ import com.dariopellegrini.kdone.auth.UserAuthorization
 import com.dariopellegrini.kdone.email.EmailConfirmationConfiguration
 import com.dariopellegrini.kdone.passwordrecovery.PasswordRecoveryConfiguration
 import com.dariopellegrini.kdone.email.EmailClient
+import com.dariopellegrini.kdone.email.EmailSenderInterface
 import com.dariopellegrini.kdone.email.model.EmailMessage
 import com.dariopellegrini.kdone.mongo.MongoRepository
 import com.dariopellegrini.kdone.privacy.model.PrivacyParagraph
@@ -171,13 +172,13 @@ open class UserRouteConfiguration<T: KDoneUser> {
         emailConfirmationConfiguration = EmailConfirmationConfiguration(emailClient, baseURL, redirectURL, emailSenderClosure)
     }
 
-    fun passwordRecovery(emailClient: EmailClient,
+    fun passwordRecovery(sender: EmailSenderInterface,
                          baseURL: String,
                          redirectURL: String,
                          emailSenderClosure: (String) -> EmailMessage) {
         passwordRecoveryConfiguration =
             PasswordRecoveryConfiguration(
-                emailClient,
+                sender,
                 baseURL,
                 redirectURL,
                 emailSenderClosure
