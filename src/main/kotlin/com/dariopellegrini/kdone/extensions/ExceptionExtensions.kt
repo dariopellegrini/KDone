@@ -18,7 +18,8 @@ import java.lang.IllegalArgumentException
 
 suspend fun ApplicationCall.respondWithException(e: Exception) {
 
-    application.environment.log.error(e.localizedMessage)
+//    application.environment.log.error(e.localizedMessage)
+    
     when (e) {
         is UserIdNotVerifiedForDocument -> respond(
             HttpStatusCode.Unauthorized,
