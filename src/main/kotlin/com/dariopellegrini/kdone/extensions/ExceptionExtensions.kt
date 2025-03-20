@@ -17,69 +17,67 @@ import org.bson.json.JsonParseException
 import java.lang.IllegalArgumentException
 
 suspend fun ApplicationCall.respondWithException(e: Exception) {
-
-//    application.environment.log.error(e.localizedMessage)
     
     when (e) {
-        is UserIdNotVerifiedForDocument -> respond(
+        is UserIdNotVerifiedForDocument -> logAndRespond(
             HttpStatusCode.Unauthorized,
             mapOf("error" to e.completeMessage, "type" to "Authorization error"))
-        is NotAuthorizedException -> respond(
+        is NotAuthorizedException -> logAndRespond(
             HttpStatusCode.Unauthorized,
             mapOf("error" to e.completeMessage, "type" to "Authorization error"))
-        is SignUpErrorException -> respond(
+        is SignUpErrorException -> logAndRespond(
             HttpStatusCode.BadRequest,
             mapOf("error" to e.completeMessage, "type" to "Authorization error"))
-        is MissingDocumentId -> respond(
+        is MissingDocumentId -> logAndRespond(
             HttpStatusCode.Unauthorized,
             mapOf("error" to e.completeMessage, "type" to "Request error"))
-        is MismatchedInputException -> respond(
+        is MismatchedInputException -> logAndRespond(
             HttpStatusCode.BadRequest,
             mapOf("error" to e.completeMessage, "type" to "Input error"))
-        is JsonMappingException -> respond(
+        is JsonMappingException -> logAndRespond(
             HttpStatusCode.BadRequest,
             mapOf("error" to e.completeMessage, "type" to "Input error"))
-        is MissingAccessToken -> respond(
+        is MissingAccessToken -> logAndRespond(
             HttpStatusCode.BadRequest,
             mapOf("error" to e.completeMessage, "type" to "Request error"))
-        is MissingRefreshToken -> respond(
+        is MissingRefreshToken -> logAndRespond(
             HttpStatusCode.BadRequest,
             mapOf("error" to e.completeMessage, "type" to "Request error"))
-        is MissingUsername -> respond(
+        is MissingUsername -> logAndRespond(
             HttpStatusCode.BadRequest,
             mapOf("error" to e.completeMessage, "type" to "Request error"))
-        is MissingPassword -> respond(
+        is MissingPassword -> logAndRespond(
             HttpStatusCode.BadRequest,
             mapOf("error" to e.completeMessage, "type" to "Request error"))
-        is MissingMotherInfoId -> respond(
+        is MissingMotherInfoId -> logAndRespond(
             HttpStatusCode.BadRequest,
             mapOf("error" to e.completeMessage, "type" to "Request error"))
-        is MissingSonInfoId -> respond(
+        is MissingSonInfoId -> logAndRespond(
             HttpStatusCode.BadRequest,
             mapOf("error" to e.completeMessage, "type" to "Request error"))
-        is DocumentNotFound -> respond(
+        is DocumentNotFound -> logAndRespond(
             HttpStatusCode.NotFound,
             mapOf("error" to e.completeMessage, "type" to "Resource not found"))
-        is MotherInfoIdNotFound -> respond(
+        is MotherInfoIdNotFound -> logAndRespond(
             HttpStatusCode.NotFound,
             mapOf("error" to e.completeMessage, "type" to "Resource not found"))
-        is SonInfoIdNotFound -> respond(
+        is SonInfoIdNotFound -> logAndRespond(
             HttpStatusCode.NotFound,
             mapOf("error" to e.completeMessage, "type" to "Resource not found"))
-        is AuthNotValidException -> respond(
+        is AuthNotValidException -> logAndRespond(
             HttpStatusCode.Unauthorized,
             mapOf("error" to e.completeMessage, "type" to "Signup error"))
-        is ServerException -> respond(
+        is ServerException -> logAndRespond(
             HttpStatusCode(e.statusCode, e.localizedMessage),
             mapOf("error" to e.completeMessage))
-        is NotFoundException -> respond(
+        is NotFoundException -> logAndRespond(
             HttpStatusCode.NotFound,
             mapOf("error" to e.completeMessage)
         )
-        is ForbiddenException -> respond(
+        is ForbiddenException -> logAndRespond(
             HttpStatusCode.Forbidden,
             mapOf("error" to e.completeMessage, "type" to "Forbidden error"))
-        is UsernameAlreadyExists -> respond(
+        is UsernameAlreadyExists -> logAndRespond(
             HttpStatusCode.Conflict,
             mapOf("error" to e.completeMessage, "type" to "Conflict error"))
         is IllegalArgumentException -> {
@@ -91,40 +89,45 @@ suspend fun ApplicationCall.respondWithException(e: Exception) {
                 HttpStatusCode(400, "Input error"),
                 mapOf("error" to e.completeMessage))
         }
-        is UnsupportedMediaTypeException -> respond(
+        is UnsupportedMediaTypeException -> logAndRespond(
             HttpStatusCode(HttpStatusCode.BadRequest.value, "Bad request"),
             mapOf("error" to e.completeMessage))
-        is IOException -> respond(
+        is IOException -> logAndRespond(
             HttpStatusCode(HttpStatusCode.BadRequest.value, "Bad request"),
             mapOf("error" to e.completeMessage))
-        is EnumValueException -> respond(
+        is EnumValueException -> logAndRespond(
             HttpStatusCode(HttpStatusCode.BadRequest.value, "Bad request"),
             mapOf("error" to e.text))
-        is BadRequestException -> respond(
+        is BadRequestException -> logAndRespond(
             HttpStatusCode(HttpStatusCode.BadRequest.value, e.localizedMessage),
             mapOf("error" to e.completeMessage))
-        is TokenExpiredException -> respond(
+        is TokenExpiredException -> logAndRespond(
             HttpStatusCode(HttpStatusCode.Unauthorized.value, "Not authorized"),
             mapOf("error" to e.completeMessage))
-        is SignatureVerificationException -> respond(
+        is SignatureVerificationException -> logAndRespond(
             HttpStatusCode(HttpStatusCode.Unauthorized.value, "Invalid signature"),
             mapOf("error" to "Invalid signature"))
-        is JsonParseException -> respond(
+        is JsonParseException -> logAndRespond(
             HttpStatusCode(HttpStatusCode.BadRequest.value, "Bad request"),
             mapOf("error" to e.completeMessage))
-        is MapCheckException -> respond(
+        is MapCheckException -> logAndRespond(
             HttpStatusCode(HttpStatusCode.BadRequest.value, "Bad request"),
             mapOf("error" to e.completeMessage))
-        is MongoWriteException -> respond(
+        is MongoWriteException -> logAndRespond(
             HttpStatusCode(HttpStatusCode.BadRequest.value, "Bad request"),
             mapOf("error" to e.completeMessage))
-        is MissingPrivacyException -> respond(
+        is MissingPrivacyException -> logAndRespond(
             HttpStatusCode(423, e.localizedMessage),
             mapOf("error" to e.completeMessage))
-        else -> respond(
+        else -> logAndRespond(
             HttpStatusCode.InternalServerError,
             mapOf("error" to e.completeMessage, "type" to "Generic error", "exception" to e.toString()))
     }
 }
 
 val Exception.completeMessage get() = "${this.localizedMessage} ${this.cause}".trim()
+
+suspend fun ApplicationCall.logAndRespond(statusCode: HttpStatusCode, responseJson: Map<String, String>) {
+    application.environment.log.error("${statusCode.value} -> $responseJson")
+    respond(statusCode, responseJson)
+}
