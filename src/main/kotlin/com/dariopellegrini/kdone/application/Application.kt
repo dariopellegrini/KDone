@@ -27,12 +27,17 @@ import io.ktor.server.websocket.*
 fun Application.installKDone(mongoDatabase: MongoDatabase,
                              jwtConfig: JWTConfig,
                              corsConfig: (CORSConfig.() -> Unit)? = null,
+                             logsConfig: (CallLoggingConfig.() -> Unit)? = null,
                              configureRoutes: Routing.() -> Unit) {
     KDoneMongoContainer.database = mongoDatabase
 
     install(DefaultHeaders)
     install(ForwardedHeaders)
-    install(CallLogging)
+    install(CallLogging) {
+        if (logsConfig != null) {
+            logsConfig(this)
+        }
+    }
     install(CORS) {
         if (corsConfig != null) {
             corsConfig(this)
@@ -113,7 +118,8 @@ fun Route.authenticateJWT(optional: Boolean = false,
 fun Application.installKDone(mongoURL: String,
                              jwtConfig: JWTConfig,
                              corsConfig: (CORSConfig.() -> Unit)? = null,
+                             logsConfig: (CallLoggingConfig.() -> Unit)? = null,
                              configureRoutes: Routing.() -> Unit) {
     installKDone(KMongo.createClient(mongoURL.substring(0, mongoURL.lastIndexOf("/")))
-        .getDatabase(mongoURL.substring(mongoURL.lastIndexOf("/") + 1)), jwtConfig, corsConfig, configureRoutes)
+        .getDatabase(mongoURL.substring(mongoURL.lastIndexOf("/") + 1)), jwtConfig, corsConfig, logsConfig, configureRoutes)
 }

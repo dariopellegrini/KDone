@@ -6,6 +6,7 @@ import com.mongodb.client.MongoDatabase
 import io.ktor.server.routing.Route
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.cors.*
 import org.litote.kmongo.KMongo
 
@@ -13,9 +14,10 @@ fun startKDone(port: Int,
                mongoURL: String,
                jwtConfig: JWTConfig,
                corsConfig: (CORSConfig.() -> Unit)? = null,
+               logsConfig: (CallLoggingConfig.() -> Unit)? = null,
                closure: Route.() -> Unit) {
     embeddedServer(Netty, port) {
-        installKDone(mongoURL, jwtConfig, corsConfig, closure)
+        installKDone(mongoURL, jwtConfig, corsConfig, logsConfig, closure)
         println("Ready")
     }.start(wait = true)
 }
@@ -24,9 +26,10 @@ fun startKDone(port: Int,
                mongoDatabase: MongoDatabase,
                jwtConfig: JWTConfig,
                corsConfig: (CORSConfig.() -> Unit)? = null,
+               logsConfig: (CallLoggingConfig.() -> Unit)? = null,
                closure: Route.() -> Unit) {
     embeddedServer(Netty, port) {
-        installKDone(mongoDatabase, jwtConfig, corsConfig, closure)
+        installKDone(mongoDatabase, jwtConfig, corsConfig, logsConfig, closure)
         println("Ready")
     }.start(wait = true)
 }
@@ -36,6 +39,7 @@ fun startKDone(port: Int,
                databaseName: String,
                jwtConfig: JWTConfig,
                corsConfig: (CORSConfig.() -> Unit)? = null,
+               logsConfig: (CallLoggingConfig.() -> Unit)? = null,
                closure: Route.() -> Unit) {
     embeddedServer(Netty, port) {
 //        val settings = MongoClientSettings.builder()
@@ -48,6 +52,7 @@ fun startKDone(port: Int,
         installKDone(client.getDatabase(databaseName),
             jwtConfig,
             corsConfig,
+            logsConfig,
             closure)
         println("Ready")
     }.start(wait = true)
