@@ -617,6 +617,10 @@ inline fun <reified T : KDoneUser>Route.userModule(endpoint: String = "users",
                     else -> repository.findById(id.mongoId())
                 }
                 call.respond(HttpStatusCode.OK, user.localize(call.language, configuration.defaultLanguage).secure())
+
+                configuration.afterUpdate?.let {
+                    it(call, patch, user)
+                }
             } catch (e: Exception) {
                 call.respondWithException(e)
                 configuration.exceptionHandler?.invoke(call, e)
